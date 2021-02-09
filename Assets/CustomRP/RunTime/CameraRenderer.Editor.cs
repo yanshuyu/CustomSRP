@@ -7,11 +7,15 @@ public partial class CameraRenderer : MonoBehaviour {
 
     static ShaderTagId[] unSupportedShaderTagIds = {
         new ShaderTagId("Always"),
+        new ShaderTagId("ShadowCaster"),
         new ShaderTagId("ForwardBase"),
-        new ShaderTagId("PrepassBase"),
-        new ShaderTagId("Vertex"),
-        new ShaderTagId("VertexLMRGBM"),
-        new ShaderTagId("VertexLM"),
+        new ShaderTagId("ForwardAdd"),
+        new ShaderTagId("PrepassBase"), // legacy deferred lighting
+        new ShaderTagId("PrepassFinal"), // legacy deferred lighting
+        new ShaderTagId("Deferred"),
+        new ShaderTagId("Vertex"), //legacy vert lit
+        new ShaderTagId("VertexLMRGBM"), // legacy vert lit
+        new ShaderTagId("VertexLM"), // legacy vert lit
     };
 
   

@@ -14,7 +14,7 @@ public partial class CameraRenderer : MonoBehaviour {
     private CullingResults _cullResults;
     
 
-    public void Render(ScriptableRenderContext context, Camera camera) {
+    public void Render(ScriptableRenderContext context, Camera camera, ref BatchingSetting batchingSetting ) {
         _context = context;
         _camera = camera;
         
@@ -24,7 +24,7 @@ public partial class CameraRenderer : MonoBehaviour {
             return;
 
         SetUp();
-        DrawVisibleGeometry();
+        DrawVisibleGeometry(ref batchingSetting);
         DebugDrawUnsupportedShaders();
         DebugDrawGizmos();
         Flush();
@@ -39,11 +39,14 @@ public partial class CameraRenderer : MonoBehaviour {
         ExecuteCmdBuffer();
     }
 
-    private void DrawVisibleGeometry() {
+    private void DrawVisibleGeometry(ref BatchingSetting batchingSetting) {
         var sortSettings = new SortingSettings(_camera) { criteria = SortingCriteria.CommonOpaque };
         var drawSettings = new DrawingSettings(unlitShaderTagId, sortSettings);
         var filterSettings = new FilteringSettings(RenderQueueRange.opaque);
 
+        drawSettings.enableDynamicBatching = batchingSetting.useDynamicBatching;
+        drawSettings.enableInstancing = batchingSetting.useGPUInstancing;
+        
         _context.DrawRenderers(_cullResults, ref drawSettings,  ref filterSettings); // draw opaques
         
         _context.DrawSkybox(_camera);
