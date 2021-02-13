@@ -4,15 +4,16 @@ using UnityEngine;
 using UnityEngine.Rendering;
 
 public partial class CameraRenderer : MonoBehaviour {
-    static ShaderTagId unlitShaderTagId = new ShaderTagId("SRPDefaultUnlit");
+    static ShaderTagId UnlitShaderTagId = new ShaderTagId("SRPDefaultUnlit");
+    static ShaderTagId LitShaderTagId = new ShaderTagId("CustomLit");
 
-    private ScriptableRenderContext _context;
     private Camera _camera;
-
     private CommandBuffer _cmdBuf = new CommandBuffer();
 
+    private ScriptableRenderContext _context;
     private CullingResults _cullResults;
     
+    private LightManager _lightMgr = new LightManager();
 
     public void Render(ScriptableRenderContext context, Camera camera, ref BatchingSetting batchingSetting ) {
         _context = context;
@@ -24,9 +25,10 @@ public partial class CameraRenderer : MonoBehaviour {
             return;
 
         SetUp();
+        _lightMgr.SetUp(ref _cullResults, ref _context);
         DrawVisibleGeometry(ref batchingSetting);
-        DebugDrawUnsupportedShaders();
-        DebugDrawGizmos();
+        DrawUnsupportedShaders();
+        DrawGizmos();
         Flush();
     }
 
@@ -41,12 +43,15 @@ public partial class CameraRenderer : MonoBehaviour {
 
     private void DrawVisibleGeometry(ref BatchingSetting batchingSetting) {
         var sortSettings = new SortingSettings(_camera) { criteria = SortingCriteria.CommonOpaque };
-        var drawSettings = new DrawingSettings(unlitShaderTagId, sortSettings);
+        var drawSettings = new DrawingSettings();
         var filterSettings = new FilteringSettings(RenderQueueRange.opaque);
-
+        
+        drawSettings.SetShaderPassName(0, UnlitShaderTagId);
+        drawSettings.SetShaderPassName(1, LitShaderTagId);
+        drawSettings.sortingSettings = sortSettings;
         drawSettings.enableDynamicBatching = batchingSetting.useDynamicBatching;
         drawSettings.enableInstancing = batchingSetting.useGPUInstancing;
-        
+
         _context.DrawRenderers(_cullResults, ref drawSettings,  ref filterSettings); // draw opaques
         
         _context.DrawSkybox(_camera);
@@ -81,9 +86,9 @@ public partial class CameraRenderer : MonoBehaviour {
     }
 
 
-    partial void DebugDrawUnsupportedShaders();
+    partial void DrawUnsupportedShaders();
 
-    partial void DebugDrawGizmos();
+    partial void DrawGizmos();
 
     partial void EmitSceneUIGeometry();
 

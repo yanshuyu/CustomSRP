@@ -19,7 +19,7 @@ public partial class CameraRenderer : MonoBehaviour {
     };
 
   
-    partial void DebugDrawUnsupportedShaders() {
+    partial void DrawUnsupportedShaders() {
         var drawSettings = new DrawingSettings();
         var filterSettings = FilteringSettings.defaultValue;
         drawSettings.sortingSettings = new SortingSettings(_camera);
@@ -32,7 +32,7 @@ public partial class CameraRenderer : MonoBehaviour {
     }
 
 
-    partial void DebugDrawGizmos() {
+    partial void DrawGizmos() {
         if (UnityEditor.Handles.ShouldRenderGizmos()) {
             _context.DrawGizmos(_camera, GizmoSubset.PreImageEffects);
             _context.DrawGizmos(_camera, GizmoSubset.PostImageEffects);

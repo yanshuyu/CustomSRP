@@ -2,7 +2,6 @@
   "dependencies": {
     "com.unity.ide.vscode": "1.2.1",
     "com.unity.render-pipelines.core": "file:/Users/sy/Downloads/com.unity.render-pipelines.core",
-    "com.unity.render-pipelines.universal": "8.2.0",
     "com.unity.ugui": "1.0.0",
     "com.unity.modules.ai": "1.0.0",
     "com.unity.modules.androidjni": "1.0.0",
