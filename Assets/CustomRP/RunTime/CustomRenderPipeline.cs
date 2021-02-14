@@ -7,15 +7,17 @@ public class CustomRenderPipeline : RenderPipeline {
     private CameraRenderer _cameraRenderer = new CameraRenderer();
 
     private BatchingSetting _batchingSetting;
+    private ShadowSetting _shadowSetting;
 
-    public CustomRenderPipeline(ref BatchingSetting batchingSetting) {
+    public CustomRenderPipeline(ref BatchingSetting batchingSetting, ref ShadowSetting shadowSetting) {
         _batchingSetting = batchingSetting;
+        _shadowSetting = shadowSetting;
         GraphicsSettings.useScriptableRenderPipelineBatching = _batchingSetting.useSRPBatching;
     }
 
     protected override void Render(ScriptableRenderContext context, Camera[] cameras) {
         foreach(var camera in cameras) {
-            _cameraRenderer.Render(context, camera, ref _batchingSetting);
+            _cameraRenderer.Render(context, camera, ref _batchingSetting, ref _shadowSetting);
         }
     }
 }

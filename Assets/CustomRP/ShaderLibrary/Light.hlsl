@@ -5,6 +5,7 @@
 struct Light {
     real3 color;
     real3 direction; 
+    real attenuation;
 };
 
 

@@ -18,11 +18,29 @@
         ZWrite [_ZWrite]
         Blend [_SrcBlend] [_DstBlend]
 
+        Pass {
+            Tags {"LightMode"="ShadowCaster"}
+            ColorMask 0
+            //Cull Front
+            
+            HLSLPROGRAM
+            #pragma target 3.5
+            #pragma vertex vert
+            #pragma fragment frag
+            #pragma multi_compile_instancing
+            #pragma shader_feature _ RENDER_MODE_CUTOFF
+
+            #include "../ShaderLibrary/ShadowCasterPass.hlsl"
+
+            ENDHLSL
+        }
+
         Pass
         {
             Tags { "LightMode"="CustomLit" }
 
             HLSLPROGRAM
+            #pragma target 3.5
             #pragma vertex vert
             #pragma fragment frag
             #pragma multi_compile_instancing
@@ -44,13 +62,25 @@
             UNITY_DEFINE_INSTANCED_PROP(real, _Smoothness)
             UNITY_INSTANCING_BUFFER_END(UnityPerMaterial)
 
+            // lights
             CBUFFER_START(CustomLight)
             real3 _DirLightColors[MAX_NUM_DIR_LIGHT];
             real3 _DirLightDirections[MAX_NUM_DIR_LIGHT];
+            real4 _DirLightShadowData[MAX_NUM_DIR_LIGHT];
+            int _DirLightShadowTileIndices[MAX_NUM_DIR_LIGHT];
             int _DirLightCount;
             CBUFFER_END
 
-            struct appdata
+            // shadows
+            #define SHADOW_SAMPLER sampler_linear_clamp_compare
+            TEXTURE2D_SHADOW(_DirectioanlShadowAtlas);
+            SAMPLER_CMP(SHADOW_SAMPLER);
+    
+            CBUFFER_START(CustomShaow)
+            float4x4 _DirectionalShadowMatrixs[MAX_NUM_DIR_LIGHT];
+            CBUFFER_END
+
+            struct Attributes
             {
                 UNITY_VERTEX_INPUT_INSTANCE_ID
                 float4 posL : POSITION;
@@ -58,7 +88,7 @@
                 float2 uv : TEXCOORD;
             };
 
-            struct v2f
+            struct Varyings
             {
                 UNITY_VERTEX_INPUT_INSTANCE_ID
                 float4 posH : SV_POSITION;
@@ -68,43 +98,52 @@
             };
 
 
-            v2f vert (appdata v)
+            Varyings vert (Attributes input)
             {
-                v2f o;
-                UNITY_SETUP_INSTANCE_ID(v);
-                UNITY_TRANSFER_INSTANCE_ID(v, o);
+                Varyings output;
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_TRANSFER_INSTANCE_ID(input, output);
                 float4 uv_st = UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _MainTex_ST);
-                o.posW = TransformObjectToWorld(v.posL);
-                o.posH = TransformWorldToHClip(o.posW);
-                o.normalW = TransformObjectToWorldNormal(v.normalL);
-                o.uv = v.uv * uv_st.xy + uv_st.zw;
+                output.posW = TransformObjectToWorld(input.posL);
+                output.posH = TransformWorldToHClip(output.posW);
+                output.normalW = TransformObjectToWorldNormal(input.normalL);
+                output.uv = input.uv * uv_st.xy + uv_st.zw;
                 
-                return o;
+                return output;
             }
 
-            real4 frag (v2f i) : SV_Target
+            real4 frag (Varyings input) : SV_Target
             {
-                UNITY_SETUP_INSTANCE_ID(i);
-                real4 Col = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv) * UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Color);
+                UNITY_SETUP_INSTANCE_ID(input);
+                real4 Col = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv) * UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Color);
                 
                 #if defined(RENDER_MODE_CUTOFF)
-                clip(UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _CutOff) - Col.a);
+                clip(Col.a - UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _CutOff));
                 #endif
 
                 Surface sur;
                 sur.color = Col.rgb;
                 sur.alpha = Col.a;
-                sur.normal = i.normalW;
-                sur.viewDirection = normalize(_WorldSpaceCameraPos - i.posW);
+                sur.normal = input.normalW;
+                sur.viewDirection = normalize(_WorldSpaceCameraPos - input.posW);
                 sur.metallic = UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Metallic);
                 sur.smoothness = UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Smoothness);
                 
                 real3 finalCol;
                 for (int i=0; i<_DirLightCount; i++) {
-                    Light l;
-                    l.color = _DirLightColors[i];
-                    l.direction = _DirLightDirections[i];
-                    finalCol += ComputeLighting(sur, l);
+                    Light light;
+                    light.color = _DirLightColors[i];
+                    light.direction = _DirLightDirections[i];
+                    light.attenuation = 1;
+
+                    int shadowTileIndex = _DirLightShadowTileIndices[i];
+                    if ( shadowTileIndex >= 0) { 
+                        real shadowStren = _DirLightShadowData[i].x;
+                        real4 posShadowed = mul(_DirectionalShadowMatrixs[shadowTileIndex], float4(input.posW, 1));
+                        light.attenuation = lerp(1, SAMPLE_TEXTURE2D_SHADOW(_DirectioanlShadowAtlas, SHADOW_SAMPLER, posShadowed), shadowStren);
+                    }
+
+                    finalCol += ComputeLighting(sur, light);
                 } 
 
                 return real4(finalCol, sur.alpha);

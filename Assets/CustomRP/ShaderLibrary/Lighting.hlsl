@@ -37,7 +37,7 @@ void GetBRDF(in Surface sur, in Light light, out real3 diffuse, out real3 spec) 
 }
 
 real3 ComputeLighting(Surface sur, Light light) {
-    real3 incomingLight = light.color * saturate(dot(light.direction, sur.normal));
+    real3 incomingLight = light.color * saturate(dot(light.direction, sur.normal)) * light.attenuation;
     
     real3 diffuse, spec;
     GetBRDF(sur, light, diffuse, spec);

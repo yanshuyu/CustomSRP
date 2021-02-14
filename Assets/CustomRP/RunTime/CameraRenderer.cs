@@ -15,30 +15,34 @@ public partial class CameraRenderer : MonoBehaviour {
     
     private LightManager _lightMgr = new LightManager();
 
-    public void Render(ScriptableRenderContext context, Camera camera, ref BatchingSetting batchingSetting ) {
+    public void Render(ScriptableRenderContext context, Camera camera, ref BatchingSetting batchingSetting, ref ShadowSetting shadowSetting ) {
         _context = context;
         _camera = camera;
-        
+        _cmdBuf.name = camera.name;
+
         EmitSceneUIGeometry();
 
-        if (!Cull())
+        if (!Cull(ref shadowSetting))
             return;
-
-        SetUp();
-        _lightMgr.SetUp(ref _cullResults, ref _context);
+        
+        SetUp(ref shadowSetting);
         DrawVisibleGeometry(ref batchingSetting);
         DrawUnsupportedShaders();
         DrawGizmos();
-        Flush();
+        Submit();
     }
 
-    private void SetUp() {
+    private void SetUp(ref ShadowSetting shadowSetting) {
+        _cmdBuf.BeginSample(_cmdBuf.name);
+        ExecuteCommandBuffer();
+        _lightMgr.SetUp(ref _context, ref _cullResults, ref shadowSetting);
+        _cmdBuf.EndSample(_cmdBuf.name);
+
         CameraClearFlags clearFlags = _camera.clearFlags;
-        _cmdBuf.name = _camera.name;
         _context.SetupCameraProperties(_camera);
         _cmdBuf.ClearRenderTarget(clearFlags <= CameraClearFlags.Depth, clearFlags <= CameraClearFlags.Color, clearFlags <= CameraClearFlags.Color ? _camera.backgroundColor.linear : Color.clear);
         _cmdBuf.BeginSample(_cmdBuf.name);
-        ExecuteCmdBuffer();
+        ExecuteCommandBuffer();
     }
 
     private void DrawVisibleGeometry(ref BatchingSetting batchingSetting) {
@@ -63,15 +67,17 @@ public partial class CameraRenderer : MonoBehaviour {
     }
 
 
-    private void Flush() {
+    private void Submit() {
         _cmdBuf.EndSample(_cmdBuf.name);
-        ExecuteCmdBuffer();
+        ExecuteCommandBuffer();
+        _lightMgr.CleanUp();
         _context.Submit();
     }
 
 
-    private bool Cull() {
+    private bool Cull(ref ShadowSetting shadowSetting) {
         if (_camera.TryGetCullingParameters(out ScriptableCullingParameters cullParas)) {
+            cullParas.shadowDistance = Mathf.Min(shadowSetting.maxDistance, _camera.farClipPlane);
             _cullResults = _context.Cull(ref cullParas);
             return true;
         }
@@ -80,7 +86,7 @@ public partial class CameraRenderer : MonoBehaviour {
     }
 
 
-    private void ExecuteCmdBuffer() {
+    private void ExecuteCommandBuffer() {
         _context.ExecuteCommandBuffer(_cmdBuf);
         _cmdBuf.Clear();
     }

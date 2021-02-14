@@ -2,6 +2,8 @@
 
 [System.Serializable]
 public struct BatchingSetting {
+    public static readonly BatchingSetting Default = new BatchingSetting(true, true, false);
+
     public bool useDynamicBatching;
     public bool useSRPBatching;
     public bool useGPUInstancing;

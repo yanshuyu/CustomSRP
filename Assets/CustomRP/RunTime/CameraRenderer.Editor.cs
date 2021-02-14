@@ -7,7 +7,7 @@ public partial class CameraRenderer : MonoBehaviour {
 
     static ShaderTagId[] unSupportedShaderTagIds = {
         new ShaderTagId("Always"),
-        new ShaderTagId("ShadowCaster"),
+        //new ShaderTagId("ShadowCaster"),
         new ShaderTagId("ForwardBase"),
         new ShaderTagId("ForwardAdd"),
         new ShaderTagId("PrepassBase"), // legacy deferred lighting
