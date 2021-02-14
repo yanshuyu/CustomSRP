@@ -47,6 +47,8 @@
             #pragma shader_feature _ RENDER_MODE_CUTOFF RENDER_MODE_FADE RENDER_MODE_TRANSPARENT
 
             #define MAX_NUM_DIR_LIGHT 4
+            #define MAX_NUM_DIR_SHADOW 4
+            #define MAX_NUM_DIR_CASCADE 4
 
             #include "../ShaderLibrary/Common.hlsl"
             #include "../ShaderLibrary/Lighting.hlsl"
@@ -77,7 +79,9 @@
             SAMPLER_CMP(SHADOW_SAMPLER);
     
             CBUFFER_START(CustomShaow)
-            float4x4 _DirectionalShadowMatrixs[MAX_NUM_DIR_LIGHT];
+            float4x4 _DirectionalShadowMatrixs[MAX_NUM_DIR_SHADOW * MAX_NUM_DIR_CASCADE];
+            float4 _DirectionalCascadeCullingSpheres[MAX_NUM_DIR_CASCADE];
+            int _DirectionalCascadeCount;
             CBUFFER_END
 
             struct Attributes
@@ -138,9 +142,19 @@
 
                     int shadowTileIndex = _DirLightShadowTileIndices[i];
                     if ( shadowTileIndex >= 0) { 
-                        real shadowStren = _DirLightShadowData[i].x;
-                        real4 posShadowed = mul(_DirectionalShadowMatrixs[shadowTileIndex], float4(input.posW, 1));
-                        light.attenuation = lerp(1, SAMPLE_TEXTURE2D_SHADOW(_DirectioanlShadowAtlas, SHADOW_SAMPLER, posShadowed), shadowStren);
+                        int cascadeOffset = 0;
+                        for (; cascadeOffset < _DirectionalCascadeCount; cascadeOffset++) {
+                            float3 relPos = input.posW - _DirectionalCascadeCullingSpheres[cascadeOffset].xyz;
+                            float distance2 = dot(relPos, relPos);
+                            if (distance2 <= _DirectionalCascadeCullingSpheres[cascadeOffset].w * _DirectionalCascadeCullingSpheres[cascadeOffset].w )
+                                break;
+                        }
+
+                        if (cascadeOffset != MAX_NUM_DIR_CASCADE) {
+                            real shadowStren = _DirLightShadowData[i].x;
+                            real4 posShadowed = mul(_DirectionalShadowMatrixs[shadowTileIndex + cascadeOffset], float4(input.posW, 1));
+                            light.attenuation = lerp(1, SAMPLE_TEXTURE2D_SHADOW(_DirectioanlShadowAtlas, SHADOW_SAMPLER, posShadowed), shadowStren);
+                        }
                     }
 
                     finalCol += ComputeLighting(sur, light);

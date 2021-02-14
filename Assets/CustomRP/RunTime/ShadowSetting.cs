@@ -16,12 +16,19 @@ public struct ShadowSetting {
 
     [System.Serializable]
     public struct Directional {
-        public static readonly Directional Default = new Directional(TextureSize._1024);
+        public static readonly Directional Default = new Directional(TextureSize._1024, 4, new Vector3(0.1f, 0.25f, 0.5f));
         
         public TextureSize atlasSize;
         
-        public Directional(TextureSize atlasSize) {
+        [Range(1, 4)]
+        public int cascadeCount;
+
+        public Vector3 cascadeSplitRatio;
+        
+        public Directional(TextureSize atlasSize, int cascadeCount, Vector3 cascadeSplitRatio) {
             this.atlasSize = atlasSize;
+            this.cascadeCount = cascadeCount;
+            this.cascadeSplitRatio = cascadeSplitRatio;
         }
     }
 
