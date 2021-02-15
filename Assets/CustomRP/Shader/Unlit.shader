@@ -19,7 +19,7 @@
         Pass {
             Tags {"LightMode"="ShadowCaster"}
             ColorMask 0
-            //Cull Front
+            Cull Front
 
             HLSLPROGRAM
             #pragma target 3.5

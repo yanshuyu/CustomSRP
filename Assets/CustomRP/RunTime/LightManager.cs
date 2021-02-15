@@ -12,6 +12,7 @@ public class LightManager {
     static int DirLightDirectionsId = Shader.PropertyToID("_DirLightDirections");
     static int DirLightShadowDataId = Shader.PropertyToID("_DirLightShadowData");
     static int DirLightShadowTileIndicesId = Shader.PropertyToID("_DirLightShadowTileIndices");
+ 
 
     private Vector4[] _dirLightColors = new Vector4[MAX_NUM_DIRECTIONAL_LIGHT];
     private Vector4[] _dirLightDirections = new Vector4[MAX_NUM_DIRECTIONAL_LIGHT];

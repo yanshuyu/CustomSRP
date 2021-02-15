@@ -8,11 +8,17 @@ public class ShadowManager {
     public static readonly int MAX_NUM_DIRECTIONAL_CASCADES = 4;
     
     static string CmdBufferName = "Shadows";
+    static int maxShadowDistanceTagId = Shader.PropertyToID("_MaxShadowDistance");
+    static int fadeDistanceRatioTagId = Shader.PropertyToID("_FadeDistanceRatio");
+    
+
     static int directionalShadowAtlasTagId = Shader.PropertyToID("_DirectioanlShadowAtlas");
     static int directionalShadowMatrixsTagId = Shader.PropertyToID("_DirectionalShadowMatrixs");
     static int directionalCascadeCullingSpheresTagId = Shader.PropertyToID("_DirectionalCascadeCullingSpheres");
     static int directionalCascadeCountTagId = Shader.PropertyToID("_DirectionalCascadeCount");
+    static int directionalCascadeTileSizeTagId = Shader.PropertyToID("_DirCasecadeTileSize");
 
+    
     public struct ShadowedDirectionalLight {
         public int visibleIndex;
         public Light light;
@@ -42,8 +48,8 @@ public class ShadowManager {
         
         _shadowedDirLights[_shadowedDirLightCount] = new ShadowedDirectionalLight() {visibleIndex = visibleLightIndex, light = dirLight};
         shadowData.x = dirLight.shadowStrength;;
-        shadowData.y = dirLight.shadowBias;
-        shadowData.z = dirLight.shadowNormalBias;
+        shadowData.y = dirLight.shadowNormalBias;
+        shadowData.z = dirLight.shadowBias;
         shadowData.w = dirLight.shadowNearPlane;
 
         int tileIdx = _shadowedDirLightCount * MAX_NUM_DIRECTIONAL_CASCADES;
@@ -82,6 +88,9 @@ public class ShadowManager {
                 RenderOneDirectionalShadow(i, _shadowedDirLights[i], ref cullResults, ref shadowSetting, tileSplitFactor);
             }
 
+
+            _cmdBuffer.SetGlobalFloat(maxShadowDistanceTagId, shadowSetting.maxDistance);
+            _cmdBuffer.SetGlobalFloat(fadeDistanceRatioTagId, shadowSetting.fadeDistanceRatio);
             _cmdBuffer.SetGlobalMatrixArray(directionalShadowMatrixsTagId, _dirShadowMatrixs);
             //_cmdBuffer.SetGlobalTexture(directionalShadowAtlasTagId, directionalShadowAtlasTagId);
             _cmdBuffer.SetGlobalInt(directionalCascadeCountTagId, shadowSetting.directional.cascadeCount);
@@ -104,7 +113,9 @@ public class ShadowManager {
         int tileSize = (int)shadowSetting.directional.atlasSize / tileSplitFactor;
         int cascadeSize = (int)shadowSetting.directional.atlasSize / (tileSplitFactor * cascadeSplitFactor);
         int visibleIndex = _shadowedDirLights[lightIdx].visibleIndex;
-
+        
+        _cmdBuffer.SetGlobalInt(directionalCascadeTileSizeTagId, cascadeSize);
+        _cmdBuffer.SetGlobalDepthBias(0, shadowedLight.light.shadowBias);
         for (int cascadeIdx = 0; cascadeIdx < shadowSetting.directional.cascadeCount; cascadeIdx++) {
             cullResults.ComputeDirectionalShadowMatricesAndCullingPrimitives(visibleIndex, cascadeIdx, shadowSetting.directional.cascadeCount, shadowSetting.directional.cascadeSplitRatio, cascadeSize, shadowedLight.light.shadowNearPlane, out Matrix4x4 viewMatrix, out Matrix4x4 projMatrix, out ShadowSplitData shadowSplitData);
             _cmdBuffer.SetViewProjectionMatrices(viewMatrix, projMatrix);
@@ -123,6 +134,7 @@ public class ShadowManager {
             ShadowDrawingSettings shadowDrawSetting = new ShadowDrawingSettings(cullResults, visibleIndex) { splitData = shadowSplitData };
             _srContext.DrawShadows(ref shadowDrawSetting);
         }
+        _cmdBuffer.SetGlobalDepthBias(0, 0);
     }
 
     Matrix4x4 ShadowMatrixToAtlasTileMatrix(Matrix4x4 shadowMatrix, Rect viewPortOffset, int atlasSize) {

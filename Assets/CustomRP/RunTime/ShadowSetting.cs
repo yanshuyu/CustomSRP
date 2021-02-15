@@ -4,7 +4,7 @@ using UnityEngine;
 
 [System.Serializable]
 public struct ShadowSetting {
-    public static readonly ShadowSetting Default = new ShadowSetting(100);
+    public static readonly ShadowSetting Default = new ShadowSetting(100, 0.1f);
 
     public enum TextureSize {
         _512 = 512,
@@ -33,10 +33,12 @@ public struct ShadowSetting {
     }
 
     [Min(0)] public float maxDistance;
+    [Range(0.001f, 1)] public float fadeDistanceRatio;
     public Directional directional;
 
-    public ShadowSetting(float maxShadowDistance) {
+    public ShadowSetting(float maxShadowDistance, float fadeDistanceRatio) {
         this.maxDistance = maxShadowDistance;
+        this.fadeDistanceRatio = Mathf.Clamp(fadeDistanceRatio, 0.001f, 1f);
         directional = Directional.Default;
     }
 
