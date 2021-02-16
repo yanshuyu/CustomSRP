@@ -33,6 +33,25 @@
             ENDHLSL
         }
 
+        Pass {
+            Tags {"LightMode"="Meta"}
+            Cull Off
+
+            HLSLPROGRAM
+            #pragma target 3.5
+            #pragma vertex vert
+            #pragma fragment frag
+            #pragma multi_compile_instancing
+            #pragma multi_compile _ RENDER_MODE_CUTOFF
+
+            #define SURFACE_INPUT_UNLIT
+
+            #include "../ShaderLibrary/MetaPass.hlsl"
+
+            ENDHLSL
+
+        }
+
         Pass
         {
             HLSLPROGRAM
@@ -42,16 +61,11 @@
             #pragma multi_compile_instancing
             #pragma shader_feature _ RENDER_MODE_CUTOFF RENDER_MODE_FADE
 
+            #define SURFACE_INPUT_UNLIT
+
             #include "../ShaderLibrary/Common.hlsl"
+            #include "../ShaderLibrary/SurfaceInput.hlsl"
 
-            TEXTURE2D(_MainTex);
-            SAMPLER(sampler_MainTex);
-
-            UNITY_INSTANCING_BUFFER_START(UnityPerMaterial)
-            UNITY_DEFINE_INSTANCED_PROP(float4, _MainTex_ST)
-            UNITY_DEFINE_INSTANCED_PROP(real4, _Color)
-            UNITY_DEFINE_INSTANCED_PROP(real, _CutOff)
-            UNITY_INSTANCING_BUFFER_END(UnityPerMaterial)
 
             struct Attributes
             {
@@ -73,9 +87,9 @@
                 Varyings output;
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_TRANSFER_INSTANCE_ID(input, output);
-                float4 uv_st = UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _MainTex_ST);
+            
                 output.posH = TransformObjectToHClip(input.posL);
-                output.uv = input.uv * uv_st.xy + uv_st.zw;
+                output.uv = TransformBaseUV(input.uv);
                 
                 return output;
             }
@@ -83,7 +97,7 @@
             real4 frag (Varyings input) : SV_Target
             {
                 UNITY_SETUP_INSTANCE_ID(i);
-                real4 Col = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv) * UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Color);
+                real4 Col = GetBaseColor(input.uv);
                 
                 #if defined(RENDER_MODE_CUTOFF)
                 clip(Col.a - UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _CutOff));

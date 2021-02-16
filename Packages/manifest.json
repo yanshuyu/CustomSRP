@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "com.unity.ide.vscode": "1.2.1",
+    "com.unity.probuilder": "4.4.0",
     "com.unity.render-pipelines.core": "file:/Users/sy/Downloads/com.unity.render-pipelines.core",
     "com.unity.ugui": "1.0.0",
     "com.unity.modules.ai": "1.0.0",

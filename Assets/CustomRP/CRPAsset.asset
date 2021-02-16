@@ -18,7 +18,8 @@ MonoBehaviour:
     useGPUInstancing: 0
   shadowSetting:
     maxDistance: 50
+    fadeDistanceRatio: 0.164
     directional:
-      atlasSize: 1024
+      atlasSize: 2048
       cascadeCount: 4
       cascadeSplitRatio: {x: 0.1, y: 0.25, z: 0.5}

@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.Rendering;
 
-public partial class CameraRenderer : MonoBehaviour {
+public partial class CameraRenderer {
 #if UNITY_EDITOR
     static Material errorMaterial = new Material(Shader.Find("Hidden/InternalErrorShader"));
 

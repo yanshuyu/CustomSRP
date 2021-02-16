@@ -43,7 +43,7 @@ public class ShadowManager {
             return -1;
         
         Light dirLight = cullResults.visibleLights[visibleLightIndex].light;
-        if (dirLight.type != LightType.Directional || dirLight.shadows == LightShadows.None || dirLight.shadowStrength <= 0 /*|| !cullResults.GetShadowCasterBounds(visibleLightIndex, out Bounds bounds)*/ ) //directinal light effect entire scene
+        if (dirLight.type != LightType.Directional || dirLight.shadows == LightShadows.None || dirLight.shadowStrength <= 0 || !cullResults.GetShadowCasterBounds(visibleLightIndex, out Bounds bounds) )
             return -1;
         
         _shadowedDirLights[_shadowedDirLightCount] = new ShadowedDirectionalLight() {visibleIndex = visibleLightIndex, light = dirLight};

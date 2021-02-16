@@ -6,6 +6,23 @@ float4x4 unity_ObjectToWorld;
 float4x4 unity_WorldToObject;
 float4 unity_LODFade;
 real4 unity_WorldTransformParams;
+
+float4 unity_LightmapST; // lightmaps
+float4 unity_DynamicLightmapST;
+
+float4 unity_SHAr; // light probes
+float4 unity_SHAg;
+float4 unity_SHAb;
+float4 unity_SHBr;
+float4 unity_SHBg;
+float4 unity_SHBb;
+float4 unity_SHC;
+
+float4 unity_ProbeVolumeParams; // light probe proxy volume
+float4x4 unity_ProbeVolumeWorldToObject;
+float4 unity_ProbeVolumeSizeInv;
+float4 unity_ProbeVolumeMin;
+
 CBUFFER_END
 
 float3 _WorldSpaceCameraPos;

@@ -7,6 +7,15 @@
       "dependencies": {},
       "url": "https://packages.unity.cn"
     },
+    "com.unity.probuilder": {
+      "version": "4.4.0",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {
+        "com.unity.settings-manager": "1.0.3"
+      },
+      "url": "https://packages.unity.cn"
+    },
     "com.unity.render-pipelines.core": {
       "version": "file:/Users/sy/Downloads/com.unity.render-pipelines.core",
       "depth": 0,
@@ -14,6 +23,13 @@
       "dependencies": {
         "com.unity.ugui": "1.0.0"
       }
+    },
+    "com.unity.settings-manager": {
+      "version": "1.0.3",
+      "depth": 1,
+      "source": "registry",
+      "dependencies": {},
+      "url": "https://packages.unity.cn"
     },
     "com.unity.ugui": {
       "version": "1.0.0",

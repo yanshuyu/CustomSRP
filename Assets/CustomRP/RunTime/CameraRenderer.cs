@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-public partial class CameraRenderer : MonoBehaviour {
+public partial class CameraRenderer {
     static ShaderTagId UnlitShaderTagId = new ShaderTagId("SRPDefaultUnlit");
     static ShaderTagId LitShaderTagId = new ShaderTagId("CustomLit");
 
@@ -52,6 +52,7 @@ public partial class CameraRenderer : MonoBehaviour {
         
         drawSettings.SetShaderPassName(0, UnlitShaderTagId);
         drawSettings.SetShaderPassName(1, LitShaderTagId);
+        drawSettings.perObjectData = PerObjectData.Lightmaps | PerObjectData.LightProbe | PerObjectData.LightProbeProxyVolume;
         drawSettings.sortingSettings = sortSettings;
         drawSettings.enableDynamicBatching = batchingSetting.useDynamicBatching;
         drawSettings.enableInstancing = batchingSetting.useGPUInstancing;

@@ -35,6 +35,23 @@
             ENDHLSL
         }
 
+        Pass {
+            Tags {"LightMode"="Meta"}
+            Cull Off
+
+            HLSLPROGRAM
+            #pragma target 3.5
+            #pragma vertex vert
+            #pragma fragment frag
+            #pragma multi_compile_instancing
+            #pragma multi_compile _ RENDER_MODE_CUTOFF
+
+            #include "../ShaderLibrary/MetaPass.hlsl"
+
+            ENDHLSL
+
+        }
+
         Pass
         {
             Tags { "LightMode"="CustomLit" }
@@ -43,6 +60,7 @@
             #pragma target 3.5
             #pragma vertex vert
             #pragma fragment frag
+            #pragma multi_compile _ LIGHTMAP_ON
             #pragma multi_compile_instancing
             #pragma shader_feature _ RENDER_MODE_CUTOFF RENDER_MODE_FADE RENDER_MODE_TRANSPARENT
 
@@ -50,18 +68,10 @@
 
             #include "../ShaderLibrary/Common.hlsl"
             #include "../ShaderLibrary/Lighting.hlsl"
+            #include "../ShaderLibrary/GI.hlsl"
             #include "../ShaderLibrary/Shadow.hlsl"
-
-            TEXTURE2D(_MainTex);
-            SAMPLER(sampler_MainTex);
-
-            UNITY_INSTANCING_BUFFER_START(UnityPerMaterial)
-            UNITY_DEFINE_INSTANCED_PROP(float4, _MainTex_ST)
-            UNITY_DEFINE_INSTANCED_PROP(real4, _Color)
-            UNITY_DEFINE_INSTANCED_PROP(real, _CutOff)
-            UNITY_DEFINE_INSTANCED_PROP(real, _Metallic)
-            UNITY_DEFINE_INSTANCED_PROP(real, _Smoothness)
-            UNITY_INSTANCING_BUFFER_END(UnityPerMaterial)
+            #include "../shaderLibrary/SurfaceInput.hlsl"
+  
 
             // lights
             CBUFFER_START(CustomLight)
@@ -75,19 +85,21 @@
 
             struct Attributes
             {
-                UNITY_VERTEX_INPUT_INSTANCE_ID
                 float4 posL : POSITION;
                 float3 normalL : NORMAL;
                 float2 uv : TEXCOORD;
+                UNITY_VERTEX_INPUT_GI_UV
+                UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
             struct Varyings
             {
-                UNITY_VERTEX_INPUT_INSTANCE_ID
                 float4 posH : SV_POSITION;
-                float3 normalW : NORMAL;
-                float3 posW : COLOR;
+                float3 normalW : VAR_NORMAL;
+                float3 posW : VAR_POSITION;
                 float2 uv : TEXCOORD;
+                UNITY_VERTEX_VARYING_GI_UV
+                UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
 
@@ -96,11 +108,12 @@
                 Varyings output;
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_TRANSFER_INSTANCE_ID(input, output);
-                float4 uv_st = UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _MainTex_ST);
+                UNITY_TRANSFER_GI_UV(input, output)
+                
                 output.posW = TransformObjectToWorld(input.posL);
                 output.posH = TransformWorldToHClip(output.posW);
                 output.normalW = TransformObjectToWorldNormal(input.normalL);
-                output.uv = input.uv * uv_st.xy + uv_st.zw;
+                output.uv = TransformBaseUV(input.uv);
                 
                 return output;
             }
@@ -108,10 +121,10 @@
             real4 frag (Varyings input) : SV_Target
             {
                 UNITY_SETUP_INSTANCE_ID(input);
-                real4 Col = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv) * UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Color);
+                real4 Col = GetBaseColor(input.uv);
                 
                 #if defined(RENDER_MODE_CUTOFF)
-                clip(Col.a - UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _CutOff));
+                clip(Col.a - GetCutOff());
                 #endif
 
                 Surface sur;
@@ -119,20 +132,27 @@
                 sur.alpha = Col.a;
                 sur.normal = input.normalW;
                 sur.viewDirection = normalize(_WorldSpaceCameraPos - input.posW);
-                sur.metallic = UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Metallic);
-                sur.smoothness = UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Smoothness);
-                
-                real3 finalCol;
+                sur.metallic = GetMetallic(input.uv);
+                sur.smoothness = GetSmoothness(input.uv);
+
+                BRDF brdf = GetBRDF(sur.color, sur.metallic, sur.smoothness);
+                GI gi = ComputeGI(UNITY_ACCESS_GI_UV(input), input.normalW, input.posW);
+
+                real4 finalCol;
+                finalCol.a = sur.alpha;
+                finalCol.rgb = brdf.diffuse * gi.diffuse;
+
                 for (int i=0; i<_DirLightCount; i++) {
                     Light light;
                     light.color = _DirLightColors[i];
                     light.direction = _DirLightDirections[i];
                     light.attenuation = ComputeShadowAttenuation(_DirLightShadowTileIndices[i], _DirLightShadowData[i].x, _DirLightShadowData[i].y, input.posW, input.normalW);
 
-                    finalCol += ComputeLighting(sur, light);
+                    finalCol.rgb += ComputeLighting(sur, light, brdf);
                 } 
 
-                return real4(finalCol, sur.alpha);
+        
+                return finalCol;
             }
 
             ENDHLSL
