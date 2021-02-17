@@ -7,6 +7,7 @@
         _CutOff ("Alpha Cut Off", Range(0, 1)) = 0.1
         _Metallic ("Metallic", Range(0, 1)) = 0
         _Smoothness ("Smoothness", Range(0, 1)) = 0.5
+        _Frensel ("Frensel", Range(0, 1)) = 1.0
         [HideInInspector] _SrcBlend ("Src Blend", Float) = 1
         [HideInInspector] _DstBlend ("Dst Blend", Float) = 0
         [HideInInspector] _ZWrite ("Z Write", Float) = 1
@@ -141,13 +142,14 @@
                 sur.viewDirection = normalize(_WorldSpaceCameraPos - input.posW);
                 sur.metallic = GetMetallic(input.uv);
                 sur.smoothness = GetSmoothness(input.uv);
+                sur.frensel = GetFrensel();
 
                 BRDF brdf = GetBRDF(sur.color, sur.metallic, sur.smoothness);
-                GI gi = ComputeGI(UNITY_ACCESS_GI_UV(input), input.normalW, input.posW);
+                GI gi = GetGI(sur, UNITY_ACCESS_GI_UV(input));
 
                 real4 finalCol;
                 finalCol.a = sur.alpha;
-                finalCol.rgb = brdf.diffuse * gi.diffuse;
+                finalCol.rgb = ComputeIndirectLight(sur, brdf, gi);
 
                 for (int i=0; i<_DirLightCount; i++) {
                     Light light;

@@ -17,9 +17,12 @@ public class LitShaderEditor : ShaderGUI {
     static string PROP_CutOff = "_CutOff";
     static string PROP_Metallic = "_Metallic";
     static string PROP_Smoothness = "_Smoothness";
+    static string PROP_Frensel = "_Frensel";
     static string PROP_ZWrite = "_ZWrite";
     static string PROP_SrcBlend = "_SrcBlend";
     static string PROP_DstBlend = "_DstBlend";
+
+
     static string KW_RenderMode_CutOff = "RENDER_MODE_CUTOFF";
     static string KW_RenderMode_Fade = "RENDER_MODE_FADE";
     static string KW_RenderMode_Transparent = "RENDER_MODE_TRANSPARENT";
@@ -100,6 +103,11 @@ public class LitShaderEditor : ShaderGUI {
 
         var smoothness = FindProperty(PROP_Smoothness, properties);
         editor.ShaderProperty(smoothness, smoothness.displayName);
+
+
+        // frensel
+        var frensel = FindProperty(PROP_Frensel, properties);
+        editor.ShaderProperty(frensel, frensel.displayName);
 
         editor.EnableInstancingField();
 

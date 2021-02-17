@@ -1,7 +1,10 @@
 #ifndef SRP_SHADER_LIBRARY_GI
 #define SRP_SHADER_LIBRARY_GI
 
+#include "Surface.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/EntityLighting.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/CommonMaterial.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/ImageBasedLighting.hlsl"
 
 #if defined(LIGHTMAP_ON)
 #define UNITY_VERTEX_INPUT_GI_UV real2 lightMapUV : TEXCOORD1;
@@ -27,9 +30,13 @@ SAMPLER(samplerunity_ShadowMask);
 TEXTURE3D_FLOAT(unity_ProbeVolumeSH);
 SAMPLER(samplerunity_ProbeVolumeSH);
 
+TEXTURECUBE(unity_SpecCube0);
+SAMPLER(samplerunity_SpecCube0); // skybox
+
 
 struct GI {
     real3 diffuse;
+    real3 specular;
     real4 bakedShadow; // 4 light baked shadow mask
 };
 
@@ -97,6 +104,14 @@ real4 SampleShadowMask(real2 lightMapUV, real3 position) {
 }
 
 
+real3 SampleEnvironment(real3 viewDir, real3 normal, real smoothness) {
+    real3 uvw = reflect(-viewDir, normal);
+    real perceptRougness = PerceptualSmoothnessToPerceptualRoughness(smoothness);
+    real4 env = SAMPLE_TEXTURECUBE_LOD(unity_SpecCube0, samplerunity_SpecCube0, uvw, PerceptualRoughnessToMipmapLevel(perceptRougness));
+    return DecodeHDREnvironment(env, unity_SpecCube0_HDR);
+}
+
+
 real4 GetBakedShadow(real2 lightMapUV, real3 position) {
     #if defined(SHADOW_MASK_DISTANCE) || defined(SHADOW_MASK_ALWAYS)
         return SampleShadowMask(lightMapUV, position);
@@ -106,10 +121,11 @@ real4 GetBakedShadow(real2 lightMapUV, real3 position) {
 }
 
 
-GI ComputeGI(real2 lightMapUV, real3 normal, real3 position) {
+GI GetGI(Surface sur, real2 lightMapUV) {
     GI gi;
-    gi.diffuse = SampleLightMap(lightMapUV) + SampleLightProbes(normal, position);
-    gi.bakedShadow = GetBakedShadow(lightMapUV, position);
+    gi.diffuse = SampleLightMap(lightMapUV) + SampleLightProbes(sur.normal, sur.position);
+    gi.specular = SampleEnvironment(sur.viewDirection, sur.normal, sur.smoothness);
+    gi.bakedShadow = GetBakedShadow(lightMapUV, sur.position);
     return gi;
 }
 

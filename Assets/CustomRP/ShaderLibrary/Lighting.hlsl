@@ -4,6 +4,7 @@
 #include "Surface.hlsl"
 #include "Light.hlsl"
 #include "BRDF.hlsl"
+#include "GI.hlsl"
 
 
 // specStren = r^2 / (d^2 * max(0.1, LdotH^2) * k )
@@ -23,6 +24,13 @@ real GetBRDFSpecStren(real3 normal, real3 viewDir, real3 lightDir, real rougness
 }
 
 
+void GetFresel(Surface sur, out real frensel, out real frenselStren) {
+    real oneMinusReflectivity = GetOneMinusReflectivity(sur.metallic);
+    frensel = saturate(sur.smoothness + 1.0 - oneMinusReflectivity);
+    frenselStren = Pow4(1.0 - saturate( dot(sur.viewDirection, sur.normal) ) );
+}
+
+
 real3 ComputeLighting(Surface sur, Light light, BRDF brdf) {
     real3 incomingLight = light.color * saturate(dot(light.direction, sur.normal)) * light.attenuation;
 
@@ -35,6 +43,15 @@ real3 ComputeLighting(Surface sur, Light light, BRDF brdf) {
     real3 col = incomingLight * (brdf.diffuse + brdf.specular * specStren);
    
     return col;
+}
+
+
+
+real3 ComputeIndirectLight(Surface sur, BRDF brdf, GI gi) {
+    real frensel, frenselStren; 
+    GetFresel(sur, frensel, frenselStren);
+    frenselStren *= sur.frensel;
+    return brdf.diffuse * gi.diffuse + gi.specular * lerp(brdf.specular, frensel, frenselStren);
 }
 
 #endif

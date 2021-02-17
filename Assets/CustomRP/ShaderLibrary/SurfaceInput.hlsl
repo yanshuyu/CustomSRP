@@ -13,6 +13,7 @@ UNITY_DEFINE_INSTANCED_PROP(real4, _Color)
 UNITY_DEFINE_INSTANCED_PROP(real, _CutOff)
 UNITY_DEFINE_INSTANCED_PROP(real, _Metallic)
 UNITY_DEFINE_INSTANCED_PROP(real, _Smoothness)
+UNITY_DEFINE_INSTANCED_PROP(real, _Frensel)
 UNITY_INSTANCING_BUFFER_END(UnityPerMaterial)
 
 
@@ -36,6 +37,10 @@ real GetMetallic(real2 baseUV = 0.0) {
 
 real GetSmoothness(real2 baseUV = 0.0) {
     return UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Smoothness);
+}
+
+real GetFrensel() {
+    return UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Frensel);
 }
 
 #else 
@@ -73,6 +78,9 @@ real GetSmoothness(real2 baseUV = 0.0) {
     return 0.0;
 }
 
+real GetFrensel() {
+    return 0.0;
+}
 
 
 #endif // SURFACE_INPUT_UNLIT

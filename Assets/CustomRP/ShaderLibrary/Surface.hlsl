@@ -9,6 +9,7 @@ struct Surface {
     real alpha;
     real metallic;
     real smoothness;
+    real frensel;
 };
 
 
