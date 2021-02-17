@@ -43,6 +43,10 @@ Varyings vert (Attributes input)
 
 void frag (Varyings input)
 {
+    #if defined(LOD_FADE_CROSSFADE)
+    ClipLOD(input.posH, unity_LODFade);
+    #endif
+    
     UNITY_SETUP_INSTANCE_ID(input);
     real4 Col = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv) * UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Color);
     

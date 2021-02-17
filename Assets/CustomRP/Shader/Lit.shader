@@ -28,6 +28,7 @@
             #pragma vertex vert
             #pragma fragment frag
             #pragma multi_compile_instancing
+            #pragma multi_compile _ LOD_FADE_CROSSFADE
             #pragma shader_feature _ RENDER_MODE_CUTOFF
 
             #include "../ShaderLibrary/ShadowCasterPass.hlsl"
@@ -63,6 +64,7 @@
             #pragma multi_compile _ LIGHTMAP_ON
             #pragma multi_compile _ SHADOW_MASK_DISTANCE SHADOW_MASK_ALWAYS
             #pragma multi_compile_instancing
+            #pragma multi_compile _ LOD_FADE_CROSSFADE
             #pragma shader_feature _ RENDER_MODE_CUTOFF RENDER_MODE_FADE RENDER_MODE_TRANSPARENT
 
             #define MAX_NUM_DIR_LIGHT 4
@@ -120,6 +122,10 @@
 
             real4 frag (Varyings input) : SV_Target
             {
+                #if defined(LOD_FADE_CROSSFADE)
+                ClipLOD(input.posH, unity_LODFade);
+                #endif
+
                 UNITY_SETUP_INSTANCE_ID(input);
                 real4 Col = GetBaseColor(input.uv);
                 

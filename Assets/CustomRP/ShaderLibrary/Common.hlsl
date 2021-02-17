@@ -14,4 +14,11 @@
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/SpaceTransforms.hlsl"
 
 
+void ClipLOD(real3 posCS, real fadeFactor) {
+    #if defined(LOD_FADE_CROSSFADE)
+    real dither = InterleavedGradientNoise(posCS.xy, 0);
+    clip(fadeFactor + fadeFactor > 0 ? dither : -dither);
+    #endif
+}
+
 #endif
