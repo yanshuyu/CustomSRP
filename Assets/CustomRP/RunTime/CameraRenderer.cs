@@ -52,7 +52,7 @@ public partial class CameraRenderer {
         
         drawSettings.SetShaderPassName(0, UnlitShaderTagId);
         drawSettings.SetShaderPassName(1, LitShaderTagId);
-        drawSettings.perObjectData = PerObjectData.Lightmaps | PerObjectData.LightProbe | PerObjectData.LightProbeProxyVolume;
+        drawSettings.perObjectData = PerObjectData.Lightmaps | PerObjectData.LightProbe | PerObjectData.LightProbeProxyVolume | PerObjectData.ShadowMask | PerObjectData.OcclusionProbe;
         drawSettings.sortingSettings = sortSettings;
         drawSettings.enableDynamicBatching = batchingSetting.useDynamicBatching;
         drawSettings.enableInstancing = batchingSetting.useGPUInstancing;

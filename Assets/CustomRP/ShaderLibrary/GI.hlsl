@@ -21,12 +21,16 @@
 TEXTURE2D(unity_Lightmap);
 SAMPLER(samplerunity_Lightmap);
 
+TEXTURE2D(unity_ShadowMask);
+SAMPLER(samplerunity_ShadowMask);
+
 TEXTURE3D_FLOAT(unity_ProbeVolumeSH);
 SAMPLER(samplerunity_ProbeVolumeSH);
 
 
 struct GI {
     real3 diffuse;
+    real4 bakedShadow; // 4 light baked shadow mask
 };
 
 
@@ -75,9 +79,37 @@ real3 SampleLightProbes(real3 normal, real3 position) {
 }
 
 
+// baked shadow
+real4 SampleShadowMask(real2 lightMapUV, real3 position) {
+    #if defined(LIGHTMAP_ON)
+    return SAMPLE_TEXTURE2D(unity_ShadowMask, samplerunity_ShadowMask, lightMapUV);
+    #else 
+    if (unity_ProbeVolumeParams.x) {  // sample occlusion probes(light probes) volume
+			return SampleProbeOcclusion( TEXTURE3D_ARGS(unity_ProbeVolumeSH, samplerunity_ProbeVolumeSH),
+                                        position,
+                                        unity_ProbeVolumeWorldToObject,
+                                        unity_ProbeVolumeParams.y, unity_ProbeVolumeParams.z,
+                                        unity_ProbeVolumeMin.xyz, unity_ProbeVolumeSizeInv.xyz );
+    } else {
+        return unity_ProbesOcclusion;
+    }
+    #endif
+}
+
+
+real4 GetBakedShadow(real2 lightMapUV, real3 position) {
+    #if defined(SHADOW_MASK_DISTANCE) || defined(SHADOW_MASK_ALWAYS)
+        return SampleShadowMask(lightMapUV, position);
+    #else 
+        return 1.0;
+    #endif
+}
+
+
 GI ComputeGI(real2 lightMapUV, real3 normal, real3 position) {
     GI gi;
     gi.diffuse = SampleLightMap(lightMapUV) + SampleLightProbes(normal, position);
+    gi.bakedShadow = GetBakedShadow(lightMapUV, position);
     return gi;
 }
 

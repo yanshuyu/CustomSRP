@@ -18,6 +18,9 @@ public class ShadowManager {
     static int directionalCascadeCountTagId = Shader.PropertyToID("_DirectionalCascadeCount");
     static int directionalCascadeTileSizeTagId = Shader.PropertyToID("_DirCasecadeTileSize");
 
+    static string KW_Shadow_Mask_Distance = "SHADOW_MASK_DISTANCE";
+    static string KW_Shadow_Mask_Always = "SHADOW_MASK_ALWAYS";
+
     
     public struct ShadowedDirectionalLight {
         public int visibleIndex;
@@ -32,30 +35,41 @@ public class ShadowManager {
     private Vector4[] _dirCascadeCullingSpheres = new Vector4[MAX_NUM_DIRECTIONAL_CASCADES];
     private int _shadowedDirLightCount = 0;
 
+    private bool _mixedLightUseShadowMask = false;
+
     public void SetUp(ref ScriptableRenderContext srContext) {
         _srContext = srContext;
         _shadowedDirLightCount = 0;
+        _mixedLightUseShadowMask = false;
     }
 
-    public int GetDirectionalShadowData(ref CullingResults cullResults, int visibleLightIndex, out Vector4 shadowData) {
-        shadowData = Vector4.zero;
+    public Vector4 GetDirectionalShadowData(ref CullingResults cullResults, int visibleLightIndex) {
+        Vector4 shadowData = new Vector4(-1, 0, 0, -1); 
         if (_shadowedDirLightCount >= MAX_NUM_DIRECTIONAL_SHADOWS)
-            return -1;
+            return shadowData;
         
         Light dirLight = cullResults.visibleLights[visibleLightIndex].light;
-        if (dirLight.type != LightType.Directional || dirLight.shadows == LightShadows.None || dirLight.shadowStrength <= 0 || !cullResults.GetShadowCasterBounds(visibleLightIndex, out Bounds bounds) )
-            return -1;
+        if (dirLight.type != LightType.Directional)
+            return shadowData;
+
+        if (dirLight.bakingOutput.lightmapBakeType == LightmapBakeType.Mixed && dirLight.bakingOutput.mixedLightingMode == MixedLightingMode.Shadowmask) {
+            shadowData.y = dirLight.shadowStrength; // when mixed light who' s shadow has baked to shadow mask did't cast shadow at run time, we want to use shadow in shadow mask
+            shadowData.w = dirLight.bakingOutput.occlusionMaskChannel;
+            _mixedLightUseShadowMask = true;
+        }
+      
+       
+        if (dirLight.shadows == LightShadows.None || dirLight.shadowStrength <= 0 || !cullResults.GetShadowCasterBounds(visibleLightIndex, out Bounds bounds) ) 
+            return shadowData;
         
         _shadowedDirLights[_shadowedDirLightCount] = new ShadowedDirectionalLight() {visibleIndex = visibleLightIndex, light = dirLight};
-        shadowData.x = dirLight.shadowStrength;;
-        shadowData.y = dirLight.shadowNormalBias;
-        shadowData.z = dirLight.shadowBias;
-        shadowData.w = dirLight.shadowNearPlane;
+        shadowData.x = _shadowedDirLightCount * MAX_NUM_DIRECTIONAL_CASCADES;
+        shadowData.y = dirLight.shadowStrength;
+        shadowData.z = dirLight.shadowNormalBias;
 
-        int tileIdx = _shadowedDirLightCount * MAX_NUM_DIRECTIONAL_CASCADES;
         _shadowedDirLightCount++;
         
-        return tileIdx;
+        return shadowData;
     }
 
 
@@ -63,14 +77,21 @@ public class ShadowManager {
 
         RenderDirectionalShadows(ref cullResults, ref shadowSetting);
 
+        if (_mixedLightUseShadowMask) {
+            _cmdBuffer.EnableShaderKeyword( QualitySettings.shadowmaskMode == ShadowmaskMode.DistanceShadowmask ? KW_Shadow_Mask_Distance : KW_Shadow_Mask_Always);
+            ExecuteCommandBuffer();
+        }
+
     }
 
 
     public void CleanUp() {
         _cmdBuffer.ReleaseTemporaryRT(directionalShadowAtlasTagId);
-        //_cmdBuffer.BeginSample(CmdBufferName);
+        _cmdBuffer.DisableShaderKeyword(KW_Shadow_Mask_Distance);
+        _cmdBuffer.DisableShaderKeyword(KW_Shadow_Mask_Always);
         ExecuteCommandBuffer();
         _shadowedDirLightCount = 0;
+        _mixedLightUseShadowMask = false;
     }
 
 

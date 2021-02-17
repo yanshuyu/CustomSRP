@@ -17,7 +17,6 @@ public class LightManager {
     private Vector4[] _dirLightColors = new Vector4[MAX_NUM_DIRECTIONAL_LIGHT];
     private Vector4[] _dirLightDirections = new Vector4[MAX_NUM_DIRECTIONAL_LIGHT];
     private Vector4[] _dirLightShadowData = new Vector4[MAX_NUM_DIRECTIONAL_LIGHT];
-    private float[] _dirLightShadowTileIndices = new float[MAX_NUM_DIRECTIONAL_LIGHT];
     private int _dirLightCount = 0;
 
     private CommandBuffer _cmdBuffer = new CommandBuffer() { name = CmdBufferName };
@@ -39,8 +38,7 @@ public class LightManager {
             if (visibleLight.lightType == LightType.Directional && visibleLight.light.intensity > 0) {
                 _dirLightColors[_dirLightCount] = visibleLight.finalColor.linear;
                 _dirLightDirections[_dirLightCount] = -visibleLight.light.transform.forward;
-                _dirLightShadowTileIndices[_dirLightCount] = _shadowMgr.GetDirectionalShadowData(ref cullResults, visibleIndex, out Vector4 shadowData);
-                _dirLightShadowData[_dirLightCount] = shadowData;
+                _dirLightShadowData[_dirLightCount] = _shadowMgr.GetDirectionalShadowData(ref cullResults, visibleIndex);
                 _dirLightCount++;
             } 
 
@@ -56,7 +54,6 @@ public class LightManager {
         _cmdBuffer.SetGlobalVectorArray(DirLightColorsId, _dirLightColors);
         _cmdBuffer.SetGlobalVectorArray(DirLightDirectionsId, _dirLightDirections);
         _cmdBuffer.SetGlobalVectorArray(DirLightShadowDataId, _dirLightShadowData);
-        _cmdBuffer.SetGlobalFloatArray(DirLightShadowTileIndicesId, _dirLightShadowTileIndices);
 
         _cmdBuffer.EndSample(CmdBufferName);
         ExecuteCmdBuffer();

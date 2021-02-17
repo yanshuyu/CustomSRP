@@ -61,6 +61,7 @@
             #pragma vertex vert
             #pragma fragment frag
             #pragma multi_compile _ LIGHTMAP_ON
+            #pragma multi_compile _ SHADOW_MASK_DISTANCE SHADOW_MASK_ALWAYS
             #pragma multi_compile_instancing
             #pragma shader_feature _ RENDER_MODE_CUTOFF RENDER_MODE_FADE RENDER_MODE_TRANSPARENT
 
@@ -78,7 +79,6 @@
             real3 _DirLightColors[MAX_NUM_DIR_LIGHT];
             real3 _DirLightDirections[MAX_NUM_DIR_LIGHT];
             real4 _DirLightShadowData[MAX_NUM_DIR_LIGHT];
-            int _DirLightShadowTileIndices[MAX_NUM_DIR_LIGHT];
             int _DirLightCount;
             CBUFFER_END
 
@@ -131,6 +131,7 @@
                 sur.color = Col.rgb;
                 sur.alpha = Col.a;
                 sur.normal = input.normalW;
+                sur.position = input.posW;
                 sur.viewDirection = normalize(_WorldSpaceCameraPos - input.posW);
                 sur.metallic = GetMetallic(input.uv);
                 sur.smoothness = GetSmoothness(input.uv);
@@ -146,7 +147,7 @@
                     Light light;
                     light.color = _DirLightColors[i];
                     light.direction = _DirLightDirections[i];
-                    light.attenuation = ComputeShadowAttenuation(_DirLightShadowTileIndices[i], _DirLightShadowData[i].x, _DirLightShadowData[i].y, input.posW, input.normalW);
+                    light.attenuation = ComputeShadowAttenuation(sur, _DirLightShadowData[i], gi);
 
                     finalCol.rgb += ComputeLighting(sur, light, brdf);
                 } 

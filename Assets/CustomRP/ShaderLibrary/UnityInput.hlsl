@@ -5,10 +5,12 @@ CBUFFER_START(UnityPerDraw)
 float4x4 unity_ObjectToWorld;
 float4x4 unity_WorldToObject;
 float4 unity_LODFade;
-real4 unity_WorldTransformParams;
+float4 unity_WorldTransformParams;
 
 float4 unity_LightmapST; // lightmaps
 float4 unity_DynamicLightmapST;
+
+float4 unity_ProbesOcclusion; // baked shadow mask 
 
 float4 unity_SHAr; // light probes
 float4 unity_SHAg;

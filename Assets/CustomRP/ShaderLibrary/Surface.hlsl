@@ -5,6 +5,7 @@ struct Surface {
     real3 color;
     real3 normal;
     real3 viewDirection;
+    real3 position;
     real alpha;
     real metallic;
     real smoothness;
