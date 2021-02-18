@@ -10,6 +10,7 @@ struct Surface {
     real metallic;
     real smoothness;
     real frensel;
+    real occllusion;
 };
 
 

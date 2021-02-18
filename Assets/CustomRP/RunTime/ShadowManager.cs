@@ -65,7 +65,7 @@ public class ShadowManager {
         _shadowedDirLights[_shadowedDirLightCount] = new ShadowedDirectionalLight() {visibleIndex = visibleLightIndex, light = dirLight};
         shadowData.x = _shadowedDirLightCount * MAX_NUM_DIRECTIONAL_CASCADES;
         shadowData.y = dirLight.shadowStrength;
-        shadowData.z = dirLight.shadowNormalBias;
+        shadowData.z = dirLight.shadowNormalBias * 2f - 1f;
 
         _shadowedDirLightCount++;
         

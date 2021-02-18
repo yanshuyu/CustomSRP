@@ -15,12 +15,17 @@ public class LitShaderEditor : ShaderGUI {
     static string PROP_mainTex = "_MainTex";
     static string PROP_Color = "_Color";
     static string PROP_CutOff = "_CutOff";
+    static string PROP_MaskTex = "_MaskTex";
     static string PROP_Metallic = "_Metallic";
     static string PROP_Smoothness = "_Smoothness";
+    static string PROP_EmissibeTex = "_EmissiveTex";
+    static string PROP_Emission = "_Emission";
+    static string PROP_Occllusion = "_Occllusion";
     static string PROP_Frensel = "_Frensel";
     static string PROP_ZWrite = "_ZWrite";
     static string PROP_SrcBlend = "_SrcBlend";
     static string PROP_DstBlend = "_DstBlend";
+
 
 
     static string KW_RenderMode_CutOff = "RENDER_MODE_CUTOFF";
@@ -90,12 +95,18 @@ public class LitShaderEditor : ShaderGUI {
         }
 
         // main texture & tint color
-        var mainTex = FindProperty(PROP_mainTex, properties);
-        editor.ShaderProperty(mainTex, mainTex.displayName);
-
+        var mainMap = FindProperty(PROP_mainTex, properties);
         var col = FindProperty(PROP_Color, properties);
-        editor.ShaderProperty(col, col.displayName);
+        editor.TexturePropertySingleLine(new GUIContent("Base", mainMap.displayName), mainMap, col);
 
+        // emission
+        var emissiveMap = FindProperty(PROP_EmissibeTex, properties);
+        var emission = FindProperty(PROP_Emission, properties);
+        editor.TexturePropertySingleLine(new GUIContent("Emission", emissiveMap.displayName), emissiveMap, emission);
+
+        // metallic/occlusion/detail/smoothness mask map 
+        var modsMap = FindProperty(PROP_MaskTex, properties);
+        editor.TexturePropertySingleLine(new GUIContent("MODS", modsMap.displayName), modsMap);
 
         // metallic & smoothness
         var metallic = FindProperty(PROP_Metallic, properties);
@@ -104,10 +115,15 @@ public class LitShaderEditor : ShaderGUI {
         var smoothness = FindProperty(PROP_Smoothness, properties);
         editor.ShaderProperty(smoothness, smoothness.displayName);
 
+        // occllusion
+        var occllusion = FindProperty(PROP_Occllusion, properties);
+        editor.ShaderProperty(occllusion, occllusion.displayName);
 
         // frensel
         var frensel = FindProperty(PROP_Frensel, properties);
         editor.ShaderProperty(frensel, frensel.displayName);
+
+        editor.TextureScaleOffsetProperty(mainMap);
 
         editor.EnableInstancingField();
 

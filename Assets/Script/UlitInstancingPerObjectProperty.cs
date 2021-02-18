@@ -6,6 +6,7 @@ using UnityEngine;
 public class UlitInstancingPerObjectProperty : MonoBehaviour
 {
     public Color color = Color.white;
+    public Color emission = Color.black;
     [Range(0, 1)] public float alphaCutOff = 0.1f;
     private static MaterialPropertyBlock mtlPropBlock;
 
@@ -18,6 +19,7 @@ public class UlitInstancingPerObjectProperty : MonoBehaviour
             mtlPropBlock = new MaterialPropertyBlock();
         mtlPropBlock.SetColor("_Color", color);
         mtlPropBlock.SetFloat("_CutOff", alphaCutOff);
+        mtlPropBlock.SetColor("_Emission", emission);
         GetComponent<Renderer>().SetPropertyBlock(mtlPropBlock);
     }
 }

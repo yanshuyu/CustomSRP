@@ -2,12 +2,16 @@
 {
     Properties
     {
-        _MainTex ("Main Texture", 2D) = "white" {}
+        _MainTex ("Main Map(RGBA)", 2D) = "white" {}
         _Color ("Color", Color) = (1, 1, 1, 1)
         _CutOff ("Alpha Cut Off", Range(0, 1)) = 0.1
         _Metallic ("Metallic", Range(0, 1)) = 0
         _Smoothness ("Smoothness", Range(0, 1)) = 0.5
         _Frensel ("Frensel", Range(0, 1)) = 1.0
+        _EmissiveTex ("Emission Map(RGB)", 2D) = "white" {}
+        [HDR] _Emission ("Emission", Color) = (0, 0, 0, 1)
+        _MaskTex ("MODS Map(Metallic/Occlusion/Detail/Smoothness Mask(RGBA))", 2D) = "white" {}
+        _Occllusion ("Occllusion", Range(0, 1)) = 1
         [HideInInspector] _SrcBlend ("Src Blend", Float) = 1
         [HideInInspector] _DstBlend ("Dst Blend", Float) = 0
         [HideInInspector] _ZWrite ("Z Write", Float) = 1
@@ -143,6 +147,7 @@
                 sur.metallic = GetMetallic(input.uv);
                 sur.smoothness = GetSmoothness(input.uv);
                 sur.frensel = GetFrensel();
+                sur.occllusion = GetOccullsion(input.uv);
 
                 BRDF brdf = GetBRDF(sur.color, sur.metallic, sur.smoothness);
                 GI gi = GetGI(sur, UNITY_ACCESS_GI_UV(input));
@@ -160,6 +165,7 @@
                     finalCol.rgb += ComputeLighting(sur, light, brdf);
                 } 
 
+                finalCol.rgb += GetEmission(input.uv);
         
                 return finalCol;
             }

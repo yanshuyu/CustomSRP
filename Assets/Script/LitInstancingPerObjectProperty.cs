@@ -6,9 +6,11 @@ using UnityEngine;
 public class LitInstancingPerObjectProperty : MonoBehaviour
 {
     public Color color = Color.white;
+    public Color emission = Color.black;
     [Range(0, 1)] public float alphaCutOff = 0.1f;
     [Range(0, 1)] public float metallic = 0;
     [Range(0, 1)] public float smoothness = 0.5f;
+    [Range(0, 1)] public float occllusion = 1f;
     [Range(0, 1)] public float frensel = 1f;
 
     private static MaterialPropertyBlock mtlPropBlock;
@@ -25,6 +27,8 @@ public class LitInstancingPerObjectProperty : MonoBehaviour
         mtlPropBlock.SetFloat("_Metallic", metallic);
         mtlPropBlock.SetFloat("_Smoothness", smoothness);
         mtlPropBlock.SetFloat("_Frensel", frensel);
+        mtlPropBlock.SetColor("_Emission", emission);
+        mtlPropBlock.SetFloat("_Occllusion", occllusion);
         GetComponent<Renderer>().SetPropertyBlock(mtlPropBlock);
     }
 }

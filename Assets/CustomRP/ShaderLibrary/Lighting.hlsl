@@ -51,7 +51,9 @@ real3 ComputeIndirectLight(Surface sur, BRDF brdf, GI gi) {
     real frensel, frenselStren; 
     GetFresel(sur, frensel, frenselStren);
     frenselStren *= sur.frensel;
-    return brdf.diffuse * gi.diffuse + gi.specular * lerp(brdf.specular, frensel, frenselStren);
+    real3 diffuse = brdf.diffuse * gi.diffuse;
+    real3 spec = gi.specular * lerp(brdf.specular, frensel, frenselStren);
+    return (diffuse + spec) * sur.occllusion;
 }
 
 #endif

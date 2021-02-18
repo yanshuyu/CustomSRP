@@ -1,10 +1,12 @@
 ﻿Shader "Custom RP/Unlit"
 {
     Properties
-    {
-        _MainTex ("Main Texture", 2D) = "white" {}
+    {   
+        _MainTex ("Main Map(RGBA)", 2D) = "white" {}
         _Color ("Color", Color) = (1, 1, 1, 1)
         _CutOff ("Alpha Cut Off", Range(0, 1)) = 0.1
+        _EmissiveTex ("Emission Map(RGB)", 2D) = "white" {}
+        [HDR] _Emission ("Emission", Color) = (0, 0, 0, 1)
         [HideInInspector] _SrcBlend ("Src Blend", Float) = 1
         [HideInInspector] _DstBlend ("Dst Blend", Float) = 0
         [HideInInspector] _ZWrite ("Z Write", Float) = 1
@@ -102,6 +104,8 @@
                 #if defined(RENDER_MODE_CUTOFF)
                 clip(Col.a - UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _CutOff));
                 #endif
+
+                Col.rgb += GetEmission(input.uv);
                 
                 return Col;
             }

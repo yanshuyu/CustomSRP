@@ -12,6 +12,8 @@ public class UnlitShaderEditor : ShaderGUI {
     }
 
     static string PROP_mainTex = "_MainTex";
+    static string PROP_EmissibeTex = "_EmissiveTex";
+    static string PROP_Emission = "_Emission";
     static string PROP_Color = "_Color";
     static string PROP_CutOff = "_CutOff";
     static string PROP_ZWrite = "_ZWrite";
@@ -79,11 +81,17 @@ public class UnlitShaderEditor : ShaderGUI {
             editor.ShaderProperty(cutOff, cutOff.displayName);
         }
 
-        var mainTex = FindProperty(PROP_mainTex, properties);
-        editor.ShaderProperty(mainTex, mainTex.displayName);
-
+        // main texture & tint color
+        var mainMap = FindProperty(PROP_mainTex, properties);
         var col = FindProperty(PROP_Color, properties);
-        editor.ShaderProperty(col, col.displayName);
+        editor.TexturePropertySingleLine(new GUIContent("Base", mainMap.displayName), mainMap, col);
+
+        // emission
+        var emissiveMap = FindProperty(PROP_EmissibeTex, properties);
+        var emission = FindProperty(PROP_Emission, properties);
+        editor.TexturePropertySingleLine(new GUIContent("Emission", emissiveMap.displayName), emissiveMap, emission);
+
+        editor.TextureScaleOffsetProperty(mainMap);
 
         editor.EnableInstancingField();
 
