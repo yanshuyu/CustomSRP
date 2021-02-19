@@ -12,13 +12,28 @@
 
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/UnityInstancing.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/SpaceTransforms.hlsl"
-
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/packing.hlsl"
 
 void ClipLOD(real3 posCS, real fadeFactor) {
     #if defined(LOD_FADE_CROSSFADE)
     real dither = InterleavedGradientNoise(posCS.xy, 0);
     clip(fadeFactor + fadeFactor > 0 ? dither : -dither);
     #endif
+}
+
+
+real3 UnpackNormal(real4 sampleNormal, real scale) {
+    #if defined(UNITY_NO_DXT5nm)
+    return UnpackNormalRGB(sampleNormal, scale);
+    #else 
+    return UnpackNormalmapRGorAG(sampleNormal, scale); // dxt5 compression
+    #endif
+}
+
+
+real3 NormalTangentToWorld(real3 normalTS, real3 normalWS, real3 tangentWS, real sign) {
+    real3x3 m = CreateTangentToWorld(normalWS, tangentWS, sign);
+    return TransformTangentToWorld(normalTS, m);
 }
 
 #endif

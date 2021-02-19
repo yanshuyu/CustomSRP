@@ -22,10 +22,19 @@ public class LitShaderEditor : ShaderGUI {
     static string PROP_Emission = "_Emission";
     static string PROP_Occllusion = "_Occllusion";
     static string PROP_Frensel = "_Frensel";
+    static string PROP_NormalTex = "_NormalTex";
+    static string PROP_NormalScale = "_NormalScale";
+
+    static string PROP_DetailTex = "_DetailTex";
+    static string PROP_DetailNormalTex = "_DetailNormalTex";
+    static string PROP_DetailAlbedo = "_DetailAlbedo";
+    static string PROP_DetailSmoothness = "_DetailSmoothness";
+    static string PROP_DetailNormalScale = "_DetailNormalScale";
+    
+
     static string PROP_ZWrite = "_ZWrite";
     static string PROP_SrcBlend = "_SrcBlend";
     static string PROP_DstBlend = "_DstBlend";
-
 
 
     static string KW_RenderMode_CutOff = "RENDER_MODE_CUTOFF";
@@ -94,6 +103,9 @@ public class LitShaderEditor : ShaderGUI {
             editor.ShaderProperty(cutOff, cutOff.displayName);
         }
 
+        
+        GUILayout.Label("Base Properties", EditorStyles.boldLabel);
+
         // main texture & tint color
         var mainMap = FindProperty(PROP_mainTex, properties);
         var col = FindProperty(PROP_Color, properties);
@@ -103,6 +115,10 @@ public class LitShaderEditor : ShaderGUI {
         var emissiveMap = FindProperty(PROP_EmissibeTex, properties);
         var emission = FindProperty(PROP_Emission, properties);
         editor.TexturePropertySingleLine(new GUIContent("Emission", emissiveMap.displayName), emissiveMap, emission);
+
+        // normal map
+        var normalMap = FindProperty(PROP_NormalTex, properties);
+        editor.TexturePropertySingleLine(new GUIContent("Normal", normalMap.displayName), normalMap);
 
         // metallic/occlusion/detail/smoothness mask map 
         var modsMap = FindProperty(PROP_MaskTex, properties);
@@ -119,12 +135,36 @@ public class LitShaderEditor : ShaderGUI {
         var occllusion = FindProperty(PROP_Occllusion, properties);
         editor.ShaderProperty(occllusion, occllusion.displayName);
 
+        // normal scale
+        var normalScale = FindProperty(PROP_NormalScale, properties);
+        editor.ShaderProperty(normalScale, normalScale.displayName);
+
         // frensel
         var frensel = FindProperty(PROP_Frensel, properties);
         editor.ShaderProperty(frensel, frensel.displayName);
-
+        
         editor.TextureScaleOffsetProperty(mainMap);
 
+
+        GUILayout.Label("Detail Properties", EditorStyles.boldLabel);
+
+        var detailMap = FindProperty(PROP_DetailTex, properties);
+        editor.TexturePropertySingleLine(new GUIContent("Detail", detailMap.displayName), detailMap);
+
+        var detailNormalMap = FindProperty(PROP_DetailNormalTex, properties);
+        editor.TexturePropertySingleLine(new GUIContent("Normal", detailNormalMap.displayName), detailNormalMap);
+       
+        var detailAlbedo = FindProperty(PROP_DetailAlbedo, properties);
+        var detailSmoothness = FindProperty(PROP_DetailSmoothness, properties);
+        var detailNormalScale = FindProperty(PROP_DetailNormalScale, properties);
+        editor.ShaderProperty(detailAlbedo, detailAlbedo.displayName);
+        editor.ShaderProperty(detailSmoothness, detailSmoothness.displayName);
+        editor.ShaderProperty(detailNormalScale, detailNormalScale.displayName);
+
+        editor.TextureScaleOffsetProperty(detailMap);
+
+
+        GUILayout.Label("Advance Options", EditorStyles.boldLabel);
         editor.EnableInstancingField();
 
     }

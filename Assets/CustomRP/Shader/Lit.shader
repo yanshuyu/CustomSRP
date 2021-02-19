@@ -2,6 +2,7 @@
 {
     Properties
     {
+        // Base
         _MainTex ("Main Map(RGBA)", 2D) = "white" {}
         _Color ("Color", Color) = (1, 1, 1, 1)
         _CutOff ("Alpha Cut Off", Range(0, 1)) = 0.1
@@ -12,6 +13,16 @@
         [HDR] _Emission ("Emission", Color) = (0, 0, 0, 1)
         _MaskTex ("MODS Map(Metallic/Occlusion/Detail/Smoothness Mask(RGBA))", 2D) = "white" {}
         _Occllusion ("Occllusion", Range(0, 1)) = 1
+        _NormalTex ("Normal Map", 2D) = "bump" {}
+        _NormalScale ("Normal Scale", Range(0, 1)) = 1
+
+        // Detail
+        _DetailTex ("Detail Map(R(Aldedo) B(Smoothness), AG(Normal))", 2D) = "gray" {}
+        _DetailNormalTex ("Detail Normal Map", 2D) = "bump" {}
+        _DetailAlbedo ("Detail Albedo", Range(0, 1)) = 1
+        _DetailSmoothness ("Detail Smoothness", Range(0, 1)) = 1
+        _DetailNormalScale ("Detail Normal Scale", Range(0, 1)) = 1
+
         [HideInInspector] _SrcBlend ("Src Blend", Float) = 1
         [HideInInspector] _DstBlend ("Dst Blend", Float) = 0
         [HideInInspector] _ZWrite ("Z Write", Float) = 1
@@ -93,6 +104,7 @@
             struct Attributes
             {
                 float4 posL : POSITION;
+                float4 tangentL : TANGENT;
                 float3 normalL : NORMAL;
                 float2 uv : TEXCOORD;
                 UNITY_VERTEX_INPUT_GI_UV
@@ -102,9 +114,11 @@
             struct Varyings
             {
                 float4 posH : SV_POSITION;
+                float4 tangentW : VAR_TANGENT;
                 float3 normalW : VAR_NORMAL;
                 float3 posW : VAR_POSITION;
-                float2 uv : TEXCOORD;
+                float2 uv : VAR_BASE_UV;
+                float2 detailUV : VAR_DETAIL_UV;
                 UNITY_VERTEX_VARYING_GI_UV
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
@@ -120,8 +134,10 @@
                 output.posW = TransformObjectToWorld(input.posL);
                 output.posH = TransformWorldToHClip(output.posW);
                 output.normalW = TransformObjectToWorldNormal(input.normalL);
+                output.tangentW = float4(TransformObjectToWorldDir(input.tangentL.xyz), input.tangentL.w);
                 output.uv = TransformBaseUV(input.uv);
-                
+                output.detailUV = TransformDetailUV(input.uv);
+
                 return output;
             }
 
@@ -132,7 +148,7 @@
                 #endif
 
                 UNITY_SETUP_INSTANCE_ID(input);
-                real4 Col = GetBaseColor(input.uv);
+                real4 Col = GetBaseColor(input.uv, input.detailUV);
                 
                 #if defined(RENDER_MODE_CUTOFF)
                 clip(Col.a - GetCutOff());
@@ -141,11 +157,11 @@
                 Surface sur;
                 sur.color = Col.rgb;
                 sur.alpha = Col.a;
-                sur.normal = input.normalW;
+                sur.normal = NormalTangentToWorld(GetNormalTS(input.uv), input.normalW, input.tangentW.xyz, input.tangentW.w);
                 sur.position = input.posW;
                 sur.viewDirection = normalize(_WorldSpaceCameraPos - input.posW);
                 sur.metallic = GetMetallic(input.uv);
-                sur.smoothness = GetSmoothness(input.uv);
+                sur.smoothness = GetSmoothness(input.uv, input.detailUV);
                 sur.frensel = GetFrensel();
                 sur.occllusion = GetOccullsion(input.uv);
 
