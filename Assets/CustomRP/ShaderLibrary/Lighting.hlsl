@@ -31,7 +31,25 @@ void GetFresel(Surface sur, out real frensel, out real frenselStren) {
 }
 
 
+real GetRangeAttenuation(real3 ray, real range) {
+    real distanceOverRange2 = dot(ray, ray) / max(range * range, 0.00001);
+    real atten = saturate(1.0 - distanceOverRange2 * distanceOverRange2);
+    return  atten * atten; 
+}
+
+real GetAngleAttenuation(real3 lightDir, real3 lightFwdDir, real4 spotAngles) {
+    real cosHalfInnerAngle = cos(0.5 * spotAngles.x);
+    real cosHalfOuterAngle = cos(0.5 * spotAngles.y);
+    real dirDot = dot(lightDir, lightFwdDir);
+    real atten = saturate((dirDot - cosHalfOuterAngle) / (cosHalfInnerAngle - cosHalfOuterAngle));
+    return atten * atten;
+}
+
+
 real3 ComputeLighting(Surface sur, Light light, BRDF brdf) {
+    if (light.attenuation <= 0)
+        return 0.0;
+
     real3 incomingLight = light.color * saturate(dot(light.direction, sur.normal)) * light.attenuation;
 
     #if defined(RENDER_MODE_TRANSPARENT) // pre multiply alpha

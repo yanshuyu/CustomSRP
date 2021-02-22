@@ -84,6 +84,8 @@
             #pragma shader_feature _ RENDER_MODE_CUTOFF RENDER_MODE_FADE RENDER_MODE_TRANSPARENT
 
             #define MAX_NUM_DIR_LIGHT 4
+            #define MAX_NUM_POINT_LIGHT 16
+            #define MAX_NUM_SPOT_LIGHT 16
 
             #include "../ShaderLibrary/Common.hlsl"
             #include "../ShaderLibrary/Lighting.hlsl"
@@ -94,10 +96,22 @@
 
             // lights
             CBUFFER_START(CustomLight)
-            real3 _DirLightColors[MAX_NUM_DIR_LIGHT];
-            real3 _DirLightDirections[MAX_NUM_DIR_LIGHT];
+            real4 _DirLightColors[MAX_NUM_DIR_LIGHT];  // directional lights
+            real4 _DirLightDirections[MAX_NUM_DIR_LIGHT];
             real4 _DirLightShadowData[MAX_NUM_DIR_LIGHT];
             int _DirLightCount;
+
+            real4 _PointLightColors[MAX_NUM_POINT_LIGHT]; // point lights
+            real4 _PointLightPositions[MAX_NUM_POINT_LIGHT];
+            real4 _PointLightShadowData[MAX_NUM_POINT_LIGHT];
+            int _PointLightCount;
+            
+            real4 _SpotLightColors[MAX_NUM_SPOT_LIGHT]; // spot lights
+            real4 _SpotLightPositions[MAX_NUM_SPOT_LIGHT];
+            real4 _SpotLightDirections[MAX_NUM_SPOT_LIGHT];
+            real4 _SpotLightAngles[MAX_NUM_SPOT_LIGHT];
+            real4 _SpotLightShadowData[MAX_NUM_SPOT_LIGHT];
+            int _SpotLightCount;
             CBUFFER_END
 
 
@@ -172,14 +186,35 @@
                 finalCol.a = sur.alpha;
                 finalCol.rgb = ComputeIndirectLight(sur, brdf, gi);
 
+                Light light;
+                ZERO_INITIALIZE(Light, light);
                 for (int i=0; i<_DirLightCount; i++) {
-                    Light light;
                     light.color = _DirLightColors[i];
                     light.direction = _DirLightDirections[i];
-                    light.attenuation = ComputeShadowAttenuation(sur, _DirLightShadowData[i], gi);
-
+                    light.attenuation = GetDirectionalShadowAtten(_DirLightShadowData[i], sur, light, gi);
                     finalCol.rgb += ComputeLighting(sur, light, brdf);
-                } 
+                }
+
+                ZERO_INITIALIZE(Light, light);
+                for (int j=0; j<_PointLightCount; j++) {
+                    real3 sur2Light = _PointLightPositions[j].xyz - sur.position;
+                    light.color = _PointLightColors[j];
+                    light.direction = normalize(sur2Light);
+                    light.attenuation = GetRangeAttenuation(sur2Light, _PointLightPositions[j].w) 
+                                        * GetPointShadowAtten(_PointLightShadowData[j], sur, light);
+                    finalCol.rgb += ComputeLighting(sur, light, brdf);
+                }
+
+                ZERO_INITIALIZE(Light, light);
+                for (int k=0; k<_SpotLightCount; k++) {
+                    real3 sur2Light = _SpotLightPositions[k].xyz - sur.position;
+                    light.color = _SpotLightColors[k];
+                    light.direction = normalize(sur2Light);
+                    light.attenuation = GetRangeAttenuation(sur2Light, _SpotLightPositions[k].w) 
+                                        * GetAngleAttenuation(light.direction, _SpotLightDirections[k], _SpotLightAngles[k])
+                                        * GetSpotShadowAtten(_SpotLightShadowData[k], sur, light);
+                    finalCol.rgb += ComputeLighting(sur, light, brdf);
+                }
 
                 finalCol.rgb += GetEmission(input.uv);
         
