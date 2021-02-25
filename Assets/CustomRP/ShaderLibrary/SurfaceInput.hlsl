@@ -119,6 +119,12 @@ UNITY_DEFINE_INSTANCED_PROP(real4, _MainTex_ST)
 UNITY_DEFINE_INSTANCED_PROP(real4, _Color)
 UNITY_DEFINE_INSTANCED_PROP(real4, _Emission)
 UNITY_DEFINE_INSTANCED_PROP(real, _CutOff)
+
+#if defined(PARTICLE_NEAR_FADE)
+UNITY_DEFINE_INSTANCED_PROP(real, _NearFadeDistance)
+UNITY_DEFINE_INSTANCED_PROP(real, _NearFadeRange)
+#endif
+
 UNITY_INSTANCING_BUFFER_END(UnityPerMaterial)
 
 
@@ -151,6 +157,16 @@ real GetFrensel() {
 real3 GetEmission(real2 uv) {
     return SAMPLE_TEXTURE2D(_EmissiveTex, sampler_MainTex, uv) * UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Emission);
 }
+
+#if defined(PARTICLE_NEAR_FADE)
+real GetParticleNearFadeDistance() {
+    return UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _NearFadeDistance);
+}
+
+real GetParticleNearFadeRange() {
+    return UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _NearFadeRange);
+}
+#endif
 
 
 #endif // SURFACE_INPUT_UNLIT

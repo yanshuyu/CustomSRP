@@ -7,6 +7,9 @@ float4x4 unity_WorldToObject;
 float4 unity_LODFade;
 float4 unity_WorldTransformParams;
 
+float4 _ProjectionParams;
+float4 unity_OrthoParams;
+
 float4 unity_LightmapST; // lightmaps
 float4 unity_DynamicLightmapST;
 

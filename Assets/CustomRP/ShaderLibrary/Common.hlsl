@@ -36,4 +36,17 @@ real3 NormalTangentToWorld(real3 normalTS, real3 normalWS, real3 tangentWS, real
     return TransformTangentToWorld(normalTS, m);
 }
 
+real ScreenPositionToViewDepth(real4 posScreen) {
+    if (unity_OrthoParams.w) { 
+        real rawDepth = posScreen.w;
+        #if UNITY_REVERSED_Z
+            rawDepth = 1 - rawDepth;
+        #endif
+        //near and far distances are stored in the Y and Z components 
+        return (_ProjectionParams.z - _ProjectionParams.y) * rawDepth + _ProjectionParams.y;
+    }
+
+    return posScreen.w;
+}
+
 #endif

@@ -6,40 +6,55 @@ using UnityEngine.Rendering;
 public partial class CameraRenderer {
     static ShaderTagId UnlitShaderTagId = new ShaderTagId("SRPDefaultUnlit");
     static ShaderTagId LitShaderTagId = new ShaderTagId("CustomLit");
-
-    private Camera _camera;
-    private CommandBuffer _cmdBuf = new CommandBuffer();
+    static int IntermediateRT = Shader.PropertyToID("_IntermediateRT");
 
     private ScriptableRenderContext _context;
+    private Camera _camera;
     private CullingResults _cullResults;
+    private bool _allowHDR;
     
+    private CommandBuffer _cmdBuf = new CommandBuffer();
     private LightManager _lightMgr = new LightManager();
+    private PostFXStack _postFXStack = new PostFXStack();
 
-    public void Render(ScriptableRenderContext context, Camera camera, ref BatchingSetting batchingSetting, ref ShadowSetting shadowSetting ) {
+    public void Render(ScriptableRenderContext context, Camera camera, 
+                        ref RenderingSetting renderingSetting, 
+                        ref BatchingSetting batchingSetting, 
+                        ref ShadowSetting shadowSetting,
+                        ref PostFXSetting postFXSetting) {
         _context = context;
         _camera = camera;
         _cmdBuf.name = camera.name;
-
+        
         EmitSceneUIGeometry();
 
         if (!Cull(ref shadowSetting))
             return;
         
-        SetUp(ref shadowSetting);
+        _postFXStack.SetUp(context, camera, ref postFXSetting, renderingSetting.allowHDR);
+        SetUp(ref renderingSetting, ref shadowSetting);
+
         DrawVisibleGeometry(ref batchingSetting);
         DrawUnsupportedShaders();
         DrawGizmos();
+
+        if (_postFXStack.isActive) {
+            _postFXStack.Render(IntermediateRT);
+        }
+
         Submit();
     }
 
-    private void SetUp(ref ShadowSetting shadowSetting) {
+    private void SetUp(ref RenderingSetting renderingSetting, ref ShadowSetting shadowSetting) {
         _cmdBuf.BeginSample(_cmdBuf.name);
         ExecuteCommandBuffer();
         _lightMgr.SetUp(ref _context, ref _cullResults, ref shadowSetting);
         _cmdBuf.EndSample(_cmdBuf.name);
 
-        CameraClearFlags clearFlags = _camera.clearFlags;
         _context.SetupCameraProperties(_camera);
+        SetUpIntermediateRT(ref renderingSetting);
+ 
+        CameraClearFlags clearFlags = _camera.clearFlags;
         _cmdBuf.ClearRenderTarget(clearFlags <= CameraClearFlags.Depth, clearFlags <= CameraClearFlags.Color, clearFlags <= CameraClearFlags.Color ? _camera.backgroundColor.linear : Color.clear);
         _cmdBuf.BeginSample(_cmdBuf.name);
         ExecuteCommandBuffer();
@@ -73,7 +88,12 @@ public partial class CameraRenderer {
     private void Submit() {
         _cmdBuf.EndSample(_cmdBuf.name);
         ExecuteCommandBuffer();
+       
         _lightMgr.CleanUp();
+        _postFXStack.CleanUp();
+
+        CleanUpIntermediateRT();
+       
         _context.Submit();
     }
 
@@ -100,5 +120,22 @@ public partial class CameraRenderer {
     partial void DrawGizmos();
 
     partial void EmitSceneUIGeometry();
+
+    void SetUpIntermediateRT(ref RenderingSetting renderingSetting) {
+        if (!_postFXStack.isActive)
+            return;
+
+        _cmdBuf.GetTemporaryRT(IntermediateRT, _camera.pixelWidth, _camera.pixelHeight, 24, FilterMode.Bilinear, renderingSetting.allowHDR && _camera.allowHDR ? RenderTextureFormat.DefaultHDR : RenderTextureFormat.Default, RenderTextureReadWrite.sRGB, (int)renderingSetting.antiAliasing);
+        _cmdBuf.SetRenderTarget(IntermediateRT, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store);
+        ExecuteCommandBuffer();
+    }
+
+    void CleanUpIntermediateRT() {
+        if (!_postFXStack.isActive)
+            return;
+
+        _cmdBuf.ReleaseTemporaryRT(IntermediateRT);
+        ExecuteCommandBuffer();
+    }
 
 }

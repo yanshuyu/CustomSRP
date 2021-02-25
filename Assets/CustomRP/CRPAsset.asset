@@ -12,14 +12,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f85e1fdd7d31042b38564822eb0e5826, type: 3}
   m_Name: CRPAsset
   m_EditorClassIdentifier: 
+  renderingSetting:
+    allowHDR: 1
+    antiAliasing: 4
   batchingSetting:
     useDynamicBatching: 1
     useSRPBatching: 1
     useGPUInstancing: 0
   shadowSetting:
-    maxDistance: 25
+    maxDistance: 50
     fadeDistanceRatio: 0.304
     directional:
       atlasSize: 2048
       cascadeCount: 4
       cascadeSplitRatio: {x: 0.1, y: 0.25, z: 0.5}
+    point:
+      atlasSize: 1024
+    spot:
+      atlasSize: 1024
+  postFXSetting: {fileID: 11400000, guid: 89faf98c2457d4249b10c49000b50309, type: 2}

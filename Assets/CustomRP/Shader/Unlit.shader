@@ -98,7 +98,7 @@
 
             real4 frag (Varyings input) : SV_Target
             {
-                UNITY_SETUP_INSTANCE_ID(i);
+                UNITY_SETUP_INSTANCE_ID(input);
                 real4 Col = GetBaseColor(input.uv);
                 
                 #if defined(RENDER_MODE_CUTOFF)
