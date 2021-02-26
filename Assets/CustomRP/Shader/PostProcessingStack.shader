@@ -154,6 +154,70 @@
         }
 
 
+        Pass
+        {
+            Name "ToneMappingReinhard"
+            HLSLPROGRAM
+            #pragma target 3.5
+            #pragma vertex vert
+            #pragma fragment frag
+            
+            TEXTURE2D(_MainTex);
+            SAMPLER(sampler_MainTex);
+
+            real4 frag(Varyings input) : SV_Target {
+                real3 col = SAMPLE_TEXTURE2D_LOD(_MainTex, sampler_MainTex, input.uv, 0).rgb;
+                col = col / (1 + col);
+                return real4(col, 1);
+            }
+
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "ToneMappingNeutral"
+            HLSLPROGRAM
+            #pragma target 3.5
+            #pragma vertex vert
+            #pragma fragment frag
+            
+            #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Color.hlsl"
+            
+            TEXTURE2D(_MainTex);
+            SAMPLER(sampler_MainTex);
+
+            real4 frag(Varyings input) : SV_Target {
+                real3 col = SAMPLE_TEXTURE2D_LOD(_MainTex, sampler_MainTex, input.uv, 0).rgb;
+                col = NeutralTonemap(col);
+                return real4(col, 1);
+            }
+
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "ToneMappingACES"
+            HLSLPROGRAM
+            #pragma target 3.5
+            #pragma vertex vert
+            #pragma fragment frag
+            
+            #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Color.hlsl"
+            #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/ACES.hlsl"
+            TEXTURE2D(_MainTex);
+            SAMPLER(sampler_MainTex);
+
+            real4 frag(Varyings input) : SV_Target {
+                real3 col = SAMPLE_TEXTURE2D_LOD(_MainTex, sampler_MainTex, input.uv, 0).rgb;
+                col = AcesTonemap(unity_to_ACES(col));
+                return real4(col, 1);
+            }
+
+            ENDHLSL
+        }
+
 
     }
 }

@@ -15,5 +15,7 @@ MonoBehaviour:
   fxShader: {fileID: 4800000, guid: 45acfadfb98704750ae840e711780d93, type: 3}
   bloom:
     iteration: 9
-    threshold: 0.81
-    strength: 3.02
+    threshold: 0.9
+    strength: 3.57
+  toneMapping:
+    mode: 2

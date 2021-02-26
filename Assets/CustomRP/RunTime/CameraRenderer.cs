@@ -11,7 +11,7 @@ public partial class CameraRenderer {
     private ScriptableRenderContext _context;
     private Camera _camera;
     private CullingResults _cullResults;
-    private bool _allowHDR;
+    private bool _useHDR;
     
     private CommandBuffer _cmdBuf = new CommandBuffer();
     private LightManager _lightMgr = new LightManager();
@@ -25,7 +25,8 @@ public partial class CameraRenderer {
         _context = context;
         _camera = camera;
         _cmdBuf.name = camera.name;
-        
+        _useHDR = renderingSetting.allowHDR && camera.allowHDR;
+
         EmitSceneUIGeometry();
 
         if (!Cull(ref shadowSetting))
@@ -36,11 +37,9 @@ public partial class CameraRenderer {
 
         DrawVisibleGeometry(ref batchingSetting);
         DrawUnsupportedShaders();
-        DrawGizmos();
-
-        if (_postFXStack.isActive) {
-            _postFXStack.Render(IntermediateRT);
-        }
+        DrawGizmosPreImageEffect();
+        _postFXStack.Render(IntermediateRT);
+        DrawGizmosPostImageEffect();
 
         Submit();
     }
@@ -117,25 +116,25 @@ public partial class CameraRenderer {
 
     partial void DrawUnsupportedShaders();
 
-    partial void DrawGizmos();
+    partial void DrawGizmosPreImageEffect();
+
+    partial void DrawGizmosPostImageEffect();
 
     partial void EmitSceneUIGeometry();
 
     void SetUpIntermediateRT(ref RenderingSetting renderingSetting) {
-        if (!_postFXStack.isActive)
-            return;
-
-        _cmdBuf.GetTemporaryRT(IntermediateRT, _camera.pixelWidth, _camera.pixelHeight, 24, FilterMode.Bilinear, renderingSetting.allowHDR && _camera.allowHDR ? RenderTextureFormat.DefaultHDR : RenderTextureFormat.Default, RenderTextureReadWrite.sRGB, (int)renderingSetting.antiAliasing);
-        _cmdBuf.SetRenderTarget(IntermediateRT, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store);
-        ExecuteCommandBuffer();
+        if (_postFXStack.isActive) {
+            _cmdBuf.GetTemporaryRT(IntermediateRT, _camera.pixelWidth, _camera.pixelHeight, 24, FilterMode.Bilinear, _useHDR ? RenderTextureFormat.DefaultHDR : RenderTextureFormat.Default, RenderTextureReadWrite.sRGB, (int)renderingSetting.antiAliasing);
+            _cmdBuf.SetRenderTarget(IntermediateRT, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store);
+            ExecuteCommandBuffer();
+        }
     }
 
     void CleanUpIntermediateRT() {
-        if (!_postFXStack.isActive)
-            return;
-
-        _cmdBuf.ReleaseTemporaryRT(IntermediateRT);
-        ExecuteCommandBuffer();
+        if (_postFXStack.isActive) {
+            _cmdBuf.ReleaseTemporaryRT(IntermediateRT);
+            ExecuteCommandBuffer();
+        }
     }
 
 }

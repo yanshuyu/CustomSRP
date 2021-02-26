@@ -32,9 +32,14 @@ public partial class CameraRenderer {
     }
 
 
-    partial void DrawGizmos() {
+    partial void DrawGizmosPreImageEffect() {
         if (UnityEditor.Handles.ShouldRenderGizmos()) {
             _context.DrawGizmos(_camera, GizmoSubset.PreImageEffects);
+        }
+    }
+
+    partial void DrawGizmosPostImageEffect() {
+        if (UnityEditor.Handles.ShouldRenderGizmos()) {
             _context.DrawGizmos(_camera, GizmoSubset.PostImageEffects);
         }
     }

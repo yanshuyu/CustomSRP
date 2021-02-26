@@ -7,11 +7,12 @@ using UnityEditor;
 public class PostFXStack {
     static readonly string CmdBufferName = "Post FX";
     static readonly int BloomThresholdPassRT = Shader.PropertyToID(PostFXSetting.BloomThresholdPass);
+    static readonly int ToneMappingPassRT = Shader.PropertyToID("ToneMapping");
     
     private ScriptableRenderContext _srContext;
     private Camera _camera;
     private CommandBuffer _cmdBuffer = new CommandBuffer(){ name = CmdBufferName};
-
+    
     private PostFXSetting _postFXSetting;
     
     public bool isActive {get; private set;}
@@ -24,7 +25,7 @@ public class PostFXStack {
     }
 
     public void SetUp(ScriptableRenderContext srContext, Camera camera, ref PostFXSetting postFXSetting, bool allowHDR) {
-        _srContext = srContext;
+         _srContext = srContext;
         _camera = camera;
         _postFXSetting = postFXSetting;
         _allowHDR = allowHDR;
@@ -39,7 +40,7 @@ public class PostFXStack {
         }
 
         #if UNITY_EDITOR
-        if (camera.cameraType == CameraType.SceneView && !SceneView.currentDrawingSceneView.sceneViewState.showImageEffects) {
+        if (camera.cameraType == CameraType.SceneView && !SceneView.currentDrawingSceneView.sceneViewState.showImageEffects ) {
             isActive = false;
         }
         #endif
@@ -61,7 +62,21 @@ public class PostFXStack {
             _postFXSetting.GetPass(PostFXSetting.BloomUpSamplingPass) >= 0 &&
             _postFXSetting.GetPass(PostFXSetting.BloomAddPass) >= 0 &&
             _postFXSetting.bloom.strength > 0 ) {
-            processedRT = DoBloom(processedRT);
+            int bloomedRT = DoBloom(processedRT);
+            if (processedRT != srcRT) {
+                _cmdBuffer.ReleaseTemporaryRT(processedRT);
+                ExecuteCommandBuffer();
+            }
+            processedRT = bloomedRT;
+        }
+
+        if (_postFXSetting.toneMapping.mode != PostFXSetting.ToneMapping.Mode.None && _useHDR) {
+            int toneMapedRT = DoToneMapping(processedRT);
+            if (processedRT != srcRT) {
+                _cmdBuffer.ReleaseTemporaryRT(processedRT);
+                ExecuteCommandBuffer();
+            }
+            processedRT = toneMapedRT;
         }
 
         DoCopy(processedRT, BuiltinRenderTextureType.CameraTarget);
@@ -149,6 +164,32 @@ public class PostFXStack {
         }
         
         return BloomThresholdPassRT;
+    }
+
+    int DoToneMapping(RenderTargetIdentifier srcRT) {
+        _cmdBuffer.BeginSample("ToneMapping");
+        _cmdBuffer.GetTemporaryRT(ToneMappingPassRT, _camera.pixelWidth, _camera.pixelHeight, 16, FilterMode.Bilinear, RenderTextureFormat.Default);
+        _cmdBuffer.SetRenderTarget(ToneMappingPassRT, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store);
+        int pass = -1;
+        switch(_postFXSetting.toneMapping.mode) {
+            case PostFXSetting.ToneMapping.Mode.Reinhard: {
+                pass = _postFXSetting.GetPass(PostFXSetting.ToneMappingReinhardPass);
+                break;
+            }
+            case PostFXSetting.ToneMapping.Mode.Neutral: {
+                    pass = _postFXSetting.GetPass(PostFXSetting.ToneMappingNeutralPass);
+                    break;
+            }
+            case PostFXSetting.ToneMapping.Mode.ACES: {
+                    pass = _postFXSetting.GetPass(PostFXSetting.ToneMappingACESPass);
+                    break;
+            }
+        }
+        _cmdBuffer.Blit(srcRT, ToneMappingPassRT, _postFXSetting.fxMaterial, pass);
+        _cmdBuffer.EndSample("ToneMapping");
+        ExecuteCommandBuffer();
+
+        return ToneMappingPassRT; 
     }
 
 }

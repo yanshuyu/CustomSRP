@@ -12,6 +12,18 @@ public class PostFXSetting : ScriptableObject {
         [Range(0, 5)] public float strength;
     }
 
+    [System.Serializable]
+    public struct ToneMapping {
+        public enum Mode {
+            None,
+            Reinhard,
+            Neutral,
+            ACES,
+        }
+
+        public Mode mode;
+    }
+
     [SerializeField]
     private Shader fxShader;
 
@@ -35,11 +47,18 @@ public class PostFXSetting : ScriptableObject {
     public static readonly string BloomDownSamplingPass = "BloomDownSampling";
     public static readonly string BloomUpSamplingPass = "BloomUpSampling";
     public static readonly string BloomAddPass = "BloomAdd";
-
+    public static readonly string ToneMappingReinhardPass = "ToneMappingReinhard";
+    public static readonly string ToneMappingNeutralPass = "ToneMappingNeutral";
+    public static readonly string ToneMappingACESPass = "ToneMappingACES";
+    
     public Bloom bloom = new Bloom() {
         iteration = 4,
         threshold = 1,
         strength = 1,
+    };
+
+    public ToneMapping toneMapping = new ToneMapping() {
+        mode = ToneMapping.Mode.Neutral
     };
 
 
