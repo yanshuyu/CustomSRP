@@ -14,8 +14,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   fxShader: {fileID: 4800000, guid: 45acfadfb98704750ae840e711780d93, type: 3}
   bloom:
-    iteration: 9
+    iteration: 7
     threshold: 0.9
-    strength: 3.57
+    strength: 5
+  colorAjustment:
+    exposure: 0.1
+    contrast: 25
+    saturation: 7
+    hue: 0
+    filter: {r: 1, g: 1, b: 1, a: 1}
+  whiteBalance:
+    temperature: 17
+    tint: 16
+  splitTone:
+    shadow: {r: 0.39986154, g: 0.34420612, b: 0.6132076, a: 1}
+    highLight: {r: 0.5660378, g: 0.5660378, b: 0.5660378, a: 1}
+    balance: 7
   toneMapping:
     mode: 2

@@ -24,6 +24,29 @@ public class PostFXSetting : ScriptableObject {
         public Mode mode;
     }
 
+    [System.Serializable]
+    public struct ColorAjustment {
+        [Range(-10, 10)] public float exposure;
+        [Range(-100,100)] public float contrast;
+        [Range(-100, 100)] public float saturation;
+        [Range(-180, 180)] public float hue;
+        [ColorUsage(false, true)] public Color filter;
+    }
+
+    [System.Serializable]
+    public struct WhiteBalance {
+        [Range(-100, 100)] public float temperature;
+        [Range(-100, 100)] public float tint;
+    }
+
+    [System.Serializable]
+    public struct SplitTone {
+        [ColorUsage(false)]
+        public Color shadow, highLight;
+        [Range(-100, 100)]
+        public float balance;
+    }
+
     [SerializeField]
     private Shader fxShader;
 
@@ -50,11 +73,28 @@ public class PostFXSetting : ScriptableObject {
     public static readonly string ToneMappingReinhardPass = "ToneMappingReinhard";
     public static readonly string ToneMappingNeutralPass = "ToneMappingNeutral";
     public static readonly string ToneMappingACESPass = "ToneMappingACES";
+    public static readonly string ColorAjustmentPass = "ColorAjustment";
     
     public Bloom bloom = new Bloom() {
         iteration = 4,
         threshold = 1,
         strength = 1,
+    };
+
+    public ColorAjustment colorAjustment = new ColorAjustment() {
+        exposure = 0,
+        contrast = 0,
+        saturation = 0,
+        hue = 0,
+        filter = Color.white,
+    };
+
+    public WhiteBalance whiteBalance = default;
+
+    public SplitTone splitTone = new SplitTone() {
+        shadow = Color.gray,
+        highLight = Color.gray,
+        balance = 0,
     };
 
     public ToneMapping toneMapping = new ToneMapping() {

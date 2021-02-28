@@ -8,6 +8,7 @@ public class PostFXStack {
     static readonly string CmdBufferName = "Post FX";
     static readonly int BloomThresholdPassRT = Shader.PropertyToID(PostFXSetting.BloomThresholdPass);
     static readonly int ToneMappingPassRT = Shader.PropertyToID("ToneMapping");
+    static readonly int ColorAjustmentPassRT = Shader.PropertyToID(PostFXSetting.ColorAjustmentPass);
     
     private ScriptableRenderContext _srContext;
     private Camera _camera;
@@ -68,6 +69,15 @@ public class PostFXStack {
                 ExecuteCommandBuffer();
             }
             processedRT = bloomedRT;
+        }
+
+        if (_postFXSetting.GetPass(PostFXSetting.ColorAjustmentPass) >= 0) {
+            int colAjustedRT = DoColorAjustments(processedRT);
+            if (processedRT != srcRT){
+                _cmdBuffer.ReleaseTemporaryRT(processedRT);
+                ExecuteCommandBuffer();
+            }
+            processedRT = colAjustedRT;
         }
 
         if (_postFXSetting.toneMapping.mode != PostFXSetting.ToneMapping.Mode.None && _useHDR) {
@@ -192,4 +202,30 @@ public class PostFXStack {
         return ToneMappingPassRT; 
     }
 
+    int DoColorAjustments(RenderTargetIdentifier srcRT) {
+        _cmdBuffer.BeginSample(PostFXSetting.ColorAjustmentPass);
+        _cmdBuffer.GetTemporaryRT(ColorAjustmentPassRT, 
+                                _camera.pixelWidth, _camera.pixelHeight, 16, 
+                                FilterMode.Bilinear,
+                                 _useHDR ? RenderTextureFormat.DefaultHDR : RenderTextureFormat.Default);
+        _cmdBuffer.SetRenderTarget(ColorAjustmentPassRT, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store);
+        float exposure = Mathf.Pow(2, _postFXSetting.colorAjustment.exposure);
+        float contrast = _postFXSetting.colorAjustment.contrast * 0.01f + 1f;
+        float hue = _postFXSetting.colorAjustment.hue / 360f;
+        float saturation = _postFXSetting.colorAjustment.saturation * 0.01f + 1f;
+        
+        _postFXSetting.fxMaterial.SetVector("_ColorAjustments", new Vector4(exposure, contrast, hue, saturation));
+        _postFXSetting.fxMaterial.SetColor("_FilterColor", _postFXSetting.colorAjustment.filter);
+        _postFXSetting.fxMaterial.SetVector("_WhiteBalance", ColorUtils.ColorBalanceToLMSCoeffs(_postFXSetting.whiteBalance.temperature, _postFXSetting.whiteBalance.tint));
+        Color shadowTone = _postFXSetting.splitTone.shadow;
+        shadowTone.a = _postFXSetting.splitTone.balance * 0.01f;
+        _postFXSetting.fxMaterial.SetColor("_ShadowTone", shadowTone);
+        _postFXSetting.fxMaterial.SetColor("_HighLightTone", _postFXSetting.splitTone.highLight);
+        
+        _cmdBuffer.Blit(srcRT, ColorAjustmentPassRT, _postFXSetting.fxMaterial, _postFXSetting.GetPass(PostFXSetting.ColorAjustmentPass));
+        _cmdBuffer.EndSample(PostFXSetting.ColorAjustmentPass);
+        ExecuteCommandBuffer();
+
+        return ColorAjustmentPassRT;
+    }
 }
