@@ -93,7 +93,14 @@ public class UnlitShaderEditor : ShaderGUI {
 
         editor.TextureScaleOffsetProperty(mainMap);
 
+        GUILayout.Label("Advance Options", EditorStyles.boldLabel);
         editor.EnableInstancingField();
+        
+        EditorGUI.BeginChangeCheck();
+        editor.LightmapEmissionProperty();
+        if(EditorGUI.EndChangeCheck()) {
+            _target.globalIlluminationFlags &= ~MaterialGlobalIlluminationFlags.EmissiveIsBlack;
+        }
 
     }
 }

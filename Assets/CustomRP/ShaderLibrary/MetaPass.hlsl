@@ -56,6 +56,8 @@ real4 frag(Varying input) : SV_TARGET {
         meta.rgb += brdf.specular * brdf.rougness * 0.5; //highly specular but rough materials also pass along some indirect light
         meta.rgb = min(PositivePow(meta.rgb, unity_OneOverOutputBoost), unity_MaxOutputValue);
         meta.a = 1.0;
+    } else if (unity_MetaFragmentControl.y) { // meta pass for emission
+        meta = real4(GetEmission(input.uv), 1);
     }
 
 

@@ -19,9 +19,9 @@
         // Detail
         _DetailTex ("Detail Map(R(Aldedo) B(Smoothness), AG(Normal))", 2D) = "gray" {}
         _DetailNormalTex ("Detail Normal Map", 2D) = "bump" {}
-        _DetailAlbedo ("Detail Albedo", Range(0, 1)) = 1
-        _DetailSmoothness ("Detail Smoothness", Range(0, 1)) = 1
-        _DetailNormalScale ("Detail Normal Scale", Range(0, 1)) = 1
+        _DetailAlbedo ("Detail Albedo", Range(0, 1)) = 0
+        _DetailSmoothness ("Detail Smoothness", Range(0, 1)) = 0
+        _DetailNormalScale ("Detail Normal Scale", Range(0, 1)) = 0
 
         [HideInInspector] _SrcBlend ("Src Blend", Float) = 1
         [HideInInspector] _DstBlend ("Dst Blend", Float) = 0

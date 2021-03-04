@@ -16,10 +16,10 @@ MonoBehaviour:
   bloom:
     iteration: 7
     threshold: 0.9
-    strength: 5
+    strength: 0
   colorAjustment:
     exposure: 0.1
-    contrast: 25
+    contrast: 9
     saturation: 7
     hue: 0
     filter: {r: 1, g: 1, b: 1, a: 1}
@@ -29,6 +29,6 @@ MonoBehaviour:
   splitTone:
     shadow: {r: 0.39986154, g: 0.34420612, b: 0.6132076, a: 1}
     highLight: {r: 0.5660378, g: 0.5660378, b: 0.5660378, a: 1}
-    balance: 7
+    balance: 2
   toneMapping:
     mode: 2
